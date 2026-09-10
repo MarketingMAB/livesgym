@@ -433,12 +433,30 @@ async function guardarCierreCaja(fecha){
  try{await persistirCierre(c);await registrarHistorial('caja','CERRAR',c.id,'Caja cerrada para '+fecha,null,c);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('Caja del '+fecha+' cerrada correctamente.');}catch(e){cajasCerradasLocal=cajasCerradasLocal.filter(x=>x.id!==c.id);localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));alert('No se pudo guardar el cierre. Verificá la conexión y los permisos de Supabase.');}
 }
 async function reabrirCajaParaCorreccion(fecha){
- if(usuarioActual?.rol!=='administrador')return alert('Solo el administrador puede corregir una caja cerrada.');
- const c=cajaCerrada(fecha);if(!c)return;
- const motivo=prompt('Ingresá el motivo de la corrección de la caja del '+fecha+':');if(!motivo||!motivo.trim())return;
- modoCorreccionCaja=true;fechaCorreccionCaja=fecha;c.estado='correccion';c.motivo_correccion=motivo.trim();c.corregida_por=usuarioActual.id;c.corregida_email=usuarioActual.email||'';c.corregida_at=ahoraISO();
- const idx=cajasCerradasLocal.findIndex(x=>x.id===c.id);if(idx>=0)cajasCerradasLocal[idx]=c;else cajasCerradasLocal.unshift(c);localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));
- try{await persistirCierre(c);await registrarHistorial('caja','REABRIR_CORRECCION',c.id,'Caja reabierta para corrección. Motivo: '+motivo.trim(),null,c);renderCaja();alert('Caja en modo corrección. Podés hacer todos los cambios que necesites. No se cerrará hasta que pulses "Cerrar nuevamente".');}catch(e){console.error(e);c.estado='cerrada';localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));modoCorreccionCaja=false;fechaCorreccionCaja=null;alert('No se pudo reabrir la caja en Supabase. La caja sigue cerrada.');}
+  if(usuarioActual?.rol!=='administrador')return alert('Solo el administrador puede corregir una caja cerrada.');
+  let c=cajasCerradasLocal.find(x=>x.fecha===fecha);
+  if(!c)return alert('No se encontró el cierre de la fecha '+fecha+'. Actualizá la caja e intentá nuevamente.');
+  if(c.estado==='correccion')return renderCaja();
+  const motivo=prompt('Ingresá el motivo de la corrección de la caja del '+fecha+':');
+  if(!motivo||!motivo.trim())return;
+  const actualizado={...c,estado:'correccion',motivo_correccion:motivo.trim(),corregida_por:usuarioActual.id,corregida_email:usuarioActual.email||'',corregida_at:ahoraISO()};
+  try{
+    if(supabaseConnected){
+      const {data,error}=await supabaseClient.from('cajas_cierres').upsert(actualizado,{onConflict:'fecha'}).select().single();
+      if(error)throw error;
+      if(data)Object.assign(actualizado,data);
+    }
+    const idx=cajasCerradasLocal.findIndex(x=>x.fecha===fecha);
+    if(idx>=0)cajasCerradasLocal[idx]=actualizado;else cajasCerradasLocal.unshift(actualizado);
+    modoCorreccionCaja=true;fechaCorreccionCaja=fecha;
+    localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));
+    await registrarHistorial('caja','REABRIR_CORRECCION',actualizado.id,'Caja reabierta para corrección. Motivo: '+motivo.trim(),c,actualizado);
+    renderAll();
+    alert('Caja del '+fecha+' quedó EN CORRECCIÓN. Podés hacer todos los cambios necesarios. No se cerrará hasta que pulses "Cerrar nuevamente".');
+  }catch(e){
+    console.error('No se pudo reabrir caja:',e);
+    alert('No se pudo reabrir la caja en Supabase. La caja seguirá cerrada. Verificá que hayas ejecutado el SQL V30 y que tu cuenta sea administrador.');
+  }
 }
 async function finalizarCorreccionCaja(fecha){
  if(usuarioActual?.rol!=='administrador')return alert('Solo el administrador puede cerrar nuevamente una caja que está en corrección.');
@@ -625,21 +643,29 @@ async function moverAPapelera(type,id,antes){
  if(supabaseConnected&&usuarioActual){try{await supabaseClient.from('papelera').insert(item)}catch(e){console.warn(e)}}
 }
 async function deleteRecord(type,id){
- if(usuarioActual?.rol!=='administrador')return alert('Solo los administradores pueden eliminar registros.');
- let key=type==='cliente'?'clientes':type==='membresia'?'membresias':type==='producto'?'productos':type==='venta'?'ventas':type==='compra'?'compras':'asistencias';
- const antes=db[key].find(x=>x.id===id);if(!antes)return;
- if(registroBloqueadoPorCaja(type,antes)){
-   const fecha=fechaDeRegistro(type,antes);
-   if(cajaCerrada(fecha)||cajaEnCorreccion(fecha))return alert('La caja del '+fecha+' está '+(cajaCerrada(fecha)?'cerrada':'en corrección')+'. Si necesitás modificar este registro, primero reabrí la caja desde Caja.');
- }
- if(!confirm('¿Enviar este registro a la papelera por 30 días?'))return;
- const idx=db[key].findIndex(x=>x.id===id);
- if(type==='venta'){const p=db.productos.find(x=>x.id===antes.productoId);if(p)p.stock+=Number(antes.cantidad||0);}
- db[key].splice(idx,1);
- const papel={id:crypto.randomUUID(),usuario_id:usuarioActual.id,usuario_email:usuarioActual.email||'',rol:usuarioActual.rol||'',modulo:type,registro_id:id,datos:clonar(antes),motivo:'Eliminado por administrador',eliminado_at:ahoraISO(),vence_at:new Date(Date.now()+30*86400000).toISOString()};
- papeleraLocal.unshift(papel);localStorage.setItem('gym_papelera_v1',JSON.stringify(papeleraLocal));
- await registrarHistorial(type,'ELIMINAR',id,'Registro enviado a papelera',antes,null);
- await save();renderAll();
+  if(usuarioActual?.rol!=='administrador')return alert('Solo los administradores pueden eliminar registros.');
+  const key=type==='cliente'?'clientes':type==='membresia'?'membresias':type==='producto'?'productos':type==='venta'?'ventas':type==='compra'?'compras':'asistencias';
+  const antes=db[key].find(x=>x.id===id);if(!antes)return;
+  const fecha=fechaDeRegistro(type,antes);
+  if(registroBloqueadoPorCaja(type,antes)){
+    if(cajaCerrada(fecha)||cajaEnCorreccion(fecha))return alert('La caja del '+fecha+' está '+(cajaCerrada(fecha)?'cerrada':'en corrección')+'. Si necesitás modificar este registro, primero reabrí la caja desde Caja.');
+  }
+  if(!confirm('¿Enviar este registro a la papelera por 30 días?'))return;
+  // Primero elimina de Supabase. Así Realtime no puede traerlo de vuelta.
+  if(supabaseConnected){
+    const {error}=await supabaseClient.from(tableMap[key]).delete().eq('id',id);
+    if(error)return alert('No se pudo eliminar de la base central: '+error.message+'\n\nEl registro NO fue eliminado localmente.');
+  }
+  const idx=db[key].findIndex(x=>x.id===id);
+  if(type==='venta'){const p=db.productos.find(x=>x.id===antes.productoId);if(p)p.stock+=Number(antes.cantidad||0);}
+  db[key].splice(idx,1);
+  const papel={id:crypto.randomUUID(),usuario_id:usuarioActual.id,usuario_email:usuarioActual.email||'',rol:usuarioActual.rol||'',modulo:type,registro_id:id,datos:clonar(antes),motivo:'Eliminado por administrador',eliminado_at:ahoraISO(),vence_at:new Date(Date.now()+30*86400000).toISOString()};
+  papeleraLocal.unshift(papel);localStorage.setItem('gym_papelera_v1',JSON.stringify(papeleraLocal));
+  await registrarHistorial(type,'ELIMINAR',id,'Registro enviado a papelera',antes,null);
+  // No vuelvas a sincronizar todo el array después del DELETE: eso podría resucitar el registro.
+  localStorage.setItem(KEY,JSON.stringify(db));
+  if(supabaseConnected){try{const {error}=await supabaseClient.from('papelera').upsert(papel,{onConflict:'id'});if(error)console.warn('Papelera remota:',error.message)}catch(e){console.warn('Papelera remota:',e)}}
+  renderAll();
 }
 function editRecord(type,id){openModal(type,id)}
 function aplicarPermisos(){
