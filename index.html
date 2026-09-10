@@ -265,6 +265,17 @@ async function loadFromSupabase(opciones={sinFallback:false}){
         });
       }
     }
+    // Historial y papelera son datos centrales de Supabase, no solo locales.
+    const {data:historialRemoto,error:historialError}=await supabaseClient.from('historial_movimientos').select('*').order('created_at',{ascending:false}).limit(1000);
+    if(historialError) throw historialError;
+    historialLocal=(historialRemoto||[]).map(r=>({...r,id:r.id||crypto.randomUUID()}));
+    localStorage.setItem('gym_historial_v1',JSON.stringify(historialLocal));
+    if(usuarioActual?.rol==='administrador'){
+      const {data:papeleraRemota,error:papeleraError}=await supabaseClient.from('papelera').select('*').order('eliminado_at',{ascending:false});
+      if(papeleraError) throw papeleraError;
+      papeleraLocal=(papeleraRemota||[]).map(r=>({...r,id:r.id||crypto.randomUUID()}));
+      localStorage.setItem('gym_papelera_v1',JSON.stringify(papeleraLocal));
+    }
     try{const {data:cajas,error:cajaError}=await supabaseClient.from('cajas_cierres').select('*').order('fecha',{ascending:false});if(!cajaError&&cajas)cajasCerradasLocal=cajas;localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));}catch(e){console.warn('Tabla cajas_cierres no disponible todavía.',e)}
     const remoteHasData=Object.values(loaded).some(a=>Array.isArray(a)&&a.length>0);
     const localHasData=Object.values(db).some(a=>Array.isArray(a)&&a.length>0);
@@ -600,7 +611,7 @@ async function registrarAsistencia(){let code=document.getElementById('codigoAsi
 async function registrarHistorial(modulo,accion,registroId,detalle='',antes=null,despues=null){
  const item={id:crypto.randomUUID(),usuario_id:usuarioActual?.id||null,usuario_email:usuarioActual?.email||'',rol:usuarioActual?.rol||'',modulo,accion,registro_id:String(registroId||''),detalle,datos_anteriores:antes,datos_nuevos:despues,created_at:new Date().toISOString()};
  historialLocal.unshift(item); localStorage.setItem('gym_historial_v1',JSON.stringify(historialLocal));
- if(supabaseConnected&&usuarioActual){try{await supabaseClient.from('historial_movimientos').insert(item)}catch(e){console.warn(e)}}
+ if(supabaseConnected&&usuarioActual){try{const {error}=await supabaseClient.from('historial_movimientos').insert(item);if(error)console.warn('No se pudo guardar historial remoto:',error.message)}catch(e){console.warn('Historial remoto:',e)}}
 }
 async function moverAPapelera(type,id,antes){
  const item={id:crypto.randomUUID(),usuario_id:usuarioActual?.id||null,usuario_email:usuarioActual?.email||'',rol:usuarioActual?.rol||'',modulo:type,registro_id:String(id),datos:antes,motivo:'Eliminado por usuario',eliminado_at:new Date().toISOString(),vence_at:new Date(Date.now()+30*86400000).toISOString()};
