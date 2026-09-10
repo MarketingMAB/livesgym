@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<title>Gym Manager - V37 Historial multiproducto corregido</title>
+<title>Gym Manager</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f6f8;color:#17202a}
 button,input,select{font:inherit}.app{display:flex;min-height:100vh}.sidebar{width:245px;background:#111827;color:#fff;padding:22px 14px;position:fixed;inset:0 auto 0 0}.brand{font-size:22px;font-weight:800;padding:0 12px 25px}.brand span{color:#22c55e}.nav button{width:100%;border:0;background:transparent;color:#cbd5e1;text-align:left;padding:12px;border-radius:9px;margin:3px 0;cursor:pointer}.nav button:hover,.nav button.active{background:#1f2937;color:#fff}.main{margin-left:245px;width:calc(100% - 245px);padding:25px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.top h1{margin:0}.date{background:#fff;padding:10px 14px;border-radius:10px;border:1px solid #e5e7eb}.section{display:none}.section.active{display:block}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px}.card small{color:#64748b}.card strong{display:block;font-size:25px;margin-top:8px}.panel{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:20px;margin-top:18px}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}.toolbar input,.toolbar select,input,select{padding:10px;border:1px solid #d1d5db;border-radius:8px;background:#fff}.toolbar input{min-width:240px}.fila-check{width:18px;height:18px;cursor:pointer}.toolbar .danger{margin-left:auto}.btn{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:700}.primary{background:#16a34a;color:#fff}.dark{background:#111827;color:#fff}.danger{background:#fee2e2;color:#b91c1c}.muted{background:#e5e7eb;color:#111827}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:11px;border-bottom:1px solid #eef2f5;font-size:14px}th{background:#f8fafc}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.form-group label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}.form-group input,.form-group select{width:100%}.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:20px}.modal.open{display:flex}.modal-box{background:#fff;border-radius:16px;padding:22px;width:min(720px,100%);max-height:90vh;overflow:auto}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.close{border:0;background:none;font-size:24px;cursor:pointer}.report-box{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.report-box .card strong{font-size:21px}.pill{display:inline-block;padding:5px 9px;border-radius:99px;background:#dcfce7;color:#166534;font-size:12px;font-weight:700}.expired{background:#fee2e2;color:#991b1b}.footer-note{margin-top:20px;color:#64748b;font-size:13px}
@@ -362,20 +362,49 @@ function toggleSeleccionTodos(type,checked){const ids=obtenerIdsVisibles(type);s
 function obtenerIdsVisibles(type){const qId={cliente:'searchClientes',membresia:'searchMembresias',asistencia:'searchAsistencia',producto:'searchProductos',venta:'searchVentas',compra:'searchCompras'}[type];const q=(document.getElementById(qId)?.value||'').toLowerCase();const key={cliente:'clientes',membresia:'membresias',asistencia:'asistencias',producto:'productos',venta:'ventas',compra:'compras'}[type];const arr=db[key]||[];if(type==='venta'){const grupos=agruparVentas().filter(g=>g.items.some(r=>[r.fecha,r.producto,r.pago,r.numeroOperacion,r.tipoOperacion,r.clienteCodigo,r.clienteNombre].some(v=>String(v||'').toLowerCase().includes(q))));return grupos.map(g=>g.principal.id);}return arr.filter(r=>{if(type==='cliente')return [r.codigo,r.nombre,r.dni,r.celular].some(v=>String(v).toLowerCase().includes(q));if(type==='membresia')return [r.boleta,r.clienteCodigo,r.clienteNombre,r.tipo].some(v=>String(v).toLowerCase().includes(q));if(type==='asistencia')return [r.codigo,r.nombre,r.fecha].some(v=>String(v).toLowerCase().includes(q));if(type==='producto')return [r.codigo,r.nombre,r.categoria].some(v=>String(v).toLowerCase().includes(q));if(type==='venta')return [r.fecha,r.producto,r.pago,r.numeroOperacion,r.tipoOperacion].some(v=>String(v||'').toLowerCase().includes(q));return [r.fecha,r.tipo,r.descripcion,r.pago,r.numeroOperacion].some(v=>String(v||'').toLowerCase().includes(q));}).map(r=>r.id)}
 function actualizarBulkUI(type){const btn=document.getElementById('bulk-'+type),count=document.getElementById('bulk-count-'+type);if(!btn)return;const n=(seleccionesMasivas[type]||[]).length;btn.style.display=n&&usuarioActual?.rol==='administrador'?'inline-block':'none';if(count)count.textContent=n;const master=document.getElementById('select-all-'+type);if(master){const vis=obtenerIdsVisibles(type).map(String),sel=seleccionesMasivas[type]||[];master.checked=vis.length>0&&vis.every(id=>sel.includes(id));master.indeterminate=sel.length>0&&!master.checked}}
 function renderPorTipo(type){({cliente:renderClientes,membresia:renderMembresias,asistencia:renderAsistencia,producto:renderProductos,venta:renderVentas,compra:renderCompras}[type]||function(){})()}
+async function sincronizarStockProductos(productosCambios){
+  const cambios=[...productosCambios.entries()];
+  for(const [productoId,nuevoStock] of cambios){
+    const p=db.productos.find(x=>x.id===productoId);
+    if(!p)continue;
+    p.stock=Number(nuevoStock);
+    p.actualizado_at=ahoraISO();
+    if(supabaseConnected){
+      const payload=cleanForSupabase('productos',p);
+      const {error}=await supabaseClient.from('productos').update({stock:payload.stock,actualizado_at:payload.actualizado_at}).eq('id',productoId);
+      if(error)throw error;
+    }
+  }
+}
+
 async function eliminarSeleccionados(type){
   if(usuarioActual?.rol!=='administrador')return alert('Solo los administradores pueden eliminar registros.');
   const ids=[...(seleccionesMasivas[type]||[])].map(String);
   if(!ids.length)return alert('Seleccioná al menos un registro.');
   const key={cliente:'clientes',membresia:'membresias',asistencia:'asistencias',producto:'productos',venta:'ventas',compra:'compras'}[type];
   if(!key)return;
-  let registros=ids.map(id=>db[key].find(r=>String(r.id)===id)).filter(Boolean);if(type==='venta'){const grupos=[...new Set(registros.map(r=>r.ventaGrupoId||r.id))];registros=grupos.flatMap(g=>db.ventas.filter(r=>(r.ventaGrupoId||r.id)===g));}
+  let registros=ids.map(id=>db[key].find(r=>String(r.id)===id)).filter(Boolean);
+  if(type==='venta'){
+    const grupos=[...new Set(registros.map(r=>r.ventaGrupoId||r.id))];
+    registros=grupos.flatMap(g=>db.ventas.filter(r=>(r.ventaGrupoId||r.id)===g));
+  }
   if(!registros.length)return alert('Los registros seleccionados ya no están disponibles.');
   const bloqueados=registros.filter(r=>registroBloqueadoPorCaja(type,r));
   if(bloqueados.length){
     const fechas=[...new Set(bloqueados.map(r=>fechaDeRegistro(type,r)).filter(Boolean))].join(', ');
     return alert('No se pueden eliminar registros de cajas cerradas o en corrección. Primero reabrí la caja desde Caja. Fechas bloqueadas: '+fechas);
   }
-  if(!confirm('¿Enviar '+registros.length+' registro(s) a la papelera por 30 días?'))return;
+  if(!confirm('¿Enviar '+(type==='venta'?('la venta con '+registros.length+' producto(s)'):registros.length+' registro(s)')+' a la papelera por 30 días?'))return;
+
+  // Calculamos primero cuánto stock debe regresar por producto.
+  const stockCambios=new Map();
+  if(type==='venta'){
+    for(const r of registros){
+      const p=db.productos.find(x=>x.id===r.productoId);
+      if(!p)return alert('No se puede eliminar la venta porque el producto '+(r.producto||'seleccionado')+' ya no existe.');
+      stockCambios.set(p.id,Number(stockCambios.get(p.id)??p.stock??0)+Number(r.cantidad||0));
+    }
+  }
 
   let eliminados=0;
   for(const antes of registros){
@@ -389,10 +418,6 @@ async function eliminarSeleccionados(type){
     }
     const idx=db[key].findIndex(x=>x.id===id);
     if(idx<0)continue;
-    if(type==='venta'){
-      const prod=db.productos.find(x=>x.id===antes.productoId);
-      if(prod)prod.stock=Number(prod.stock||0)+Number(antes.cantidad||0);
-    }
     db[key].splice(idx,1);
     const papel={id:crypto.randomUUID(),usuario_id:usuarioActual.id,usuario_email:usuarioActual.email||'',rol:usuarioActual.rol||'',modulo:type,registro_id:id,datos:clonar(antes),motivo:'Eliminado por administrador',eliminado_at:ahoraISO(),vence_at:new Date(Date.now()+30*86400000).toISOString()};
     papeleraLocal.unshift(papel);
@@ -403,13 +428,20 @@ async function eliminarSeleccionados(type){
     await registrarHistorial(type,'ELIMINAR',id,'Registro enviado a papelera mediante eliminación masiva',antes,null);
     eliminados++;
   }
+
+  // Devolvemos el stock una sola vez por producto, incluso en ventas multiproducto.
+  if(type==='venta' && eliminados){
+    try{await sincronizarStockProductos(stockCambios)}catch(e){
+      console.error('Stock después de eliminar ventas:',e);
+      alert('La venta fue eliminada, pero no se pudo sincronizar el stock con la base central: '+(e.message||e));
+    }
+  }
   seleccionesMasivas[type]=[];
   localStorage.setItem('gym_papelera_v1',JSON.stringify(papeleraLocal));
   localStorage.setItem(KEY,JSON.stringify(db));
   renderAll();
   if(eliminados)alert(eliminados+' registro(s) enviado(s) a la papelera correctamente.');
 }
-
 
 function renderClientes(){
  const q=(document.getElementById('searchClientes')?.value||'').toLowerCase();
@@ -731,11 +763,52 @@ async function moverAPapelera(type,id,antes){
 async function deleteRecord(type,id){
   if(usuarioActual?.rol!=='administrador')return alert('Solo los administradores pueden eliminar registros.');
   const key=type==='cliente'?'clientes':type==='membresia'?'membresias':type==='producto'?'productos':type==='venta'?'ventas':type==='compra'?'compras':'asistencias';
-  const antes=db[key].find(x=>x.id===id);if(!antes)return;const grupoVenta=type==='venta'?(antes.ventaGrupoId||antes.id):null;const registrosVenta=type==='venta'?db.ventas.filter(x=>(x.ventaGrupoId||x.id)===grupoVenta):[antes];const fecha=fechaDeRegistro(type,antes);
+  const antes=db[key].find(x=>x.id===id);if(!antes)return;
+  const grupoVenta=type==='venta'?(antes.ventaGrupoId||antes.id):null;
+  const registrosVenta=type==='venta'?db.ventas.filter(x=>(x.ventaGrupoId||x.id)===grupoVenta):[antes];
+  const fecha=fechaDeRegistro(type,antes);
   if(registroBloqueadoPorCaja(type,antes)){if(cajaCerrada(fecha)||cajaEnCorreccion(fecha))return alert('La caja del '+fecha+' está '+(cajaCerrada(fecha)?'cerrada':'en corrección')+'. Si necesitás modificar este registro, primero reabrí la caja desde Caja.');}
   if(!confirm('¿Enviar '+(type==='venta'?('la venta con '+registrosVenta.length+' producto(s)'):'este registro')+' a la papelera por 30 días?'))return;
-  for(const reg of registrosVenta){if(supabaseConnected){const {error}=await supabaseClient.from(tableMap[key]).delete().eq('id',reg.id);if(error)return alert('No se pudo eliminar de la base central: '+error.message+'\n\nEl registro NO fue eliminado localmente.');}const idx=db[key].findIndex(x=>x.id===reg.id);if(idx<0)continue;if(type==='venta'){const p=db.productos.find(x=>x.id===reg.productoId);if(p)p.stock+=Number(reg.cantidad||0);}db[key].splice(idx,1);const papel={id:crypto.randomUUID(),usuario_id:usuarioActual.id,usuario_email:usuarioActual.email||'',rol:usuarioActual.rol||'',modulo:type,registro_id:reg.id,datos:clonar(reg),motivo:'Eliminado por administrador',eliminado_at:ahoraISO(),vence_at:new Date(Date.now()+30*86400000).toISOString()};papeleraLocal.unshift(papel);if(supabaseConnected){try{await supabaseClient.from('papelera').upsert(papel,{onConflict:'id'})}catch(e){console.warn(e)}}}if(type==='venta'&&registrosVenta.length>1){const productosVenta=registrosVenta.map(r=>({producto:r.producto,cantidad:r.cantidad,precio:r.precio,total:r.total}));await registrarHistorial('venta','ELIMINAR',grupoVenta,'Venta multiproducto enviada a papelera. Productos: '+productosVenta.map(x=>x.producto+' ×'+x.cantidad+' = '+money(x.total)).join(' | '),{productos:productosVenta},{productos:productosVenta,eliminada:true});}else{const reg=registrosVenta[0];await registrarHistorial(type,'ELIMINAR',reg.id,'Registro enviado a papelera',reg,null);}}
+
+  // Guardamos el stock actual y calculamos la devolución por producto.
+  const stockCambios=new Map();
+  if(type==='venta'){
+    for(const reg of registrosVenta){
+      const p=db.productos.find(x=>x.id===reg.productoId);
+      if(!p)return alert('No se puede eliminar la venta porque el producto '+(reg.producto||'seleccionado')+' ya no existe.');
+      const actual=stockCambios.has(p.id)?stockCambios.get(p.id):Number(p.stock||0);
+      stockCambios.set(p.id,actual+Number(reg.cantidad||0));
+    }
+  }
+
+  for(const reg of registrosVenta){
+    if(supabaseConnected){
+      const {error}=await supabaseClient.from(tableMap[key]).delete().eq('id',reg.id);
+      if(error)return alert('No se pudo eliminar de la base central: '+error.message+'\n\nEl registro NO fue eliminado localmente.');
+    }
+    const idx=db[key].findIndex(x=>x.id===reg.id);if(idx<0)continue;
+    db[key].splice(idx,1);
+    const papel={id:crypto.randomUUID(),usuario_id:usuarioActual.id,usuario_email:usuarioActual.email||'',rol:usuarioActual.rol||'',modulo:type,registro_id:reg.id,datos:clonar(reg),motivo:'Eliminado por administrador',eliminado_at:ahoraISO(),vence_at:new Date(Date.now()+30*86400000).toISOString()};
+    papeleraLocal.unshift(papel);
+    if(supabaseConnected){try{const {error}=await supabaseClient.from('papelera').upsert(papel,{onConflict:'id'});if(error)console.warn('Papelera remota:',error.message)}catch(e){console.warn(e)}}
+  }
+
+  // Devolvemos y persistimos el stock de TODOS los productos de la venta.
+  if(type==='venta'){
+    try{await sincronizarStockProductos(stockCambios)}catch(e){
+      console.error('Stock después de eliminar venta:',e);
+      alert('La venta fue eliminada, pero no se pudo sincronizar el stock con la base central: '+(e.message||e));
+    }
+  }
+
+  if(type==='venta'&&registrosVenta.length>1){
+    const productosVenta=registrosVenta.map(r=>({producto:r.producto,cantidad:r.cantidad,precio:r.precio,total:r.total}));
+    await registrarHistorial('venta','ELIMINAR',grupoVenta,'Venta multiproducto enviada a papelera. Productos: '+productosVenta.map(x=>x.producto+' ×'+x.cantidad+' = '+money(x.total)).join(' | '),{productos:productosVenta},{productos:productosVenta,eliminada:true});
+  }else{
+    const reg=registrosVenta[0];await registrarHistorial(type,'ELIMINAR',reg.id,'Registro enviado a papelera',reg,null);
+  }
   localStorage.setItem('gym_papelera_v1',JSON.stringify(papeleraLocal));localStorage.setItem(KEY,JSON.stringify(db));renderAll();
+}
 function editRecord(type,id){openModal(type,id)}
 function aplicarPermisos(){
  const admin=usuarioActual?.rol==='administrador'; document.getElementById('navPapelera')?.classList.toggle('hidden',!admin); document.getElementById('navUsuarios')?.classList.toggle('hidden',!admin);
