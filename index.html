@@ -430,9 +430,7 @@ async function reabrirCajaParaCorreccion(fecha){
 async function finalizarCorreccionCaja(fecha){
  if(usuarioActual?.rol!=='administrador')return alert('Solo el administrador puede cerrar nuevamente una caja que está en corrección.');
  const c=cajaEnCorreccion(fecha);if(!c)return alert('La caja no está en modo corrección.');
- if(!confirm('¿Confirmás que terminaste todas las modificaciones de la caja del '+fecha+' y querés CERRARLA NUEVAMENTE?
-
-Si elegís Cancelar, seguirá EN CORRECCIÓN y podrás continuar modificándola.'))return;
+ if(!confirm('¿Confirmás que terminaste todas las modificaciones de la caja del '+fecha+' y querés CERRARLA NUEVAMENTE?\n\nSi elegís Cancelar, seguirá EN CORRECCIÓN y podrás continuar modificándola.'))return;
  const mem=db.membresias.filter(x=>x.fecha===fecha),ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'),com=db.compras.filter(x=>x.fecha===fecha);const tv=mem.reduce((s,x)=>s+Number(x.total||0),0)+ven.reduce((s,x)=>s+Number(x.total||0),0),tg=com.reduce((s,x)=>s+Number(x.monto||0),0);
  const anterior={...c};
  const actualizado={...c,estado:'cerrada',total_ventas:tv,total_compras:tg,total_cierre:tv-tg,recerrado_at:ahoraISO(),cerrado_por:usuarioActual.id,cerrado_email:usuarioActual.email||'',cerrado_rol:usuarioActual.rol||'',cerrado_at:ahoraISO()};
@@ -472,9 +470,7 @@ async function reabrirCajaParaCorreccion(fecha){
 async function finalizarCorreccionCaja(fecha){
  if(usuarioActual?.rol!=='administrador')return alert('Solo el administrador puede cerrar nuevamente una caja que está en corrección.');
  const c=cajaEnCorreccion(fecha);if(!c)return alert('La caja no está en modo corrección.');
- if(!confirm('¿Confirmás que terminaste todas las modificaciones de la caja del '+fecha+' y querés CERRARLA NUEVAMENTE?
-
-Si elegís Cancelar, seguirá EN CORRECCIÓN y podrás continuar modificándola.'))return;
+ if(!confirm('¿Confirmás que terminaste todas las modificaciones de la caja del '+fecha+' y querés CERRARLA NUEVAMENTE?\n\nSi elegís Cancelar, seguirá EN CORRECCIÓN y podrás continuar modificándola.'))return;
  const mem=db.membresias.filter(x=>x.fecha===fecha),ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'),com=db.compras.filter(x=>x.fecha===fecha);const tv=mem.reduce((s,x)=>s+Number(x.total||0),0)+ven.reduce((s,x)=>s+Number(x.total||0),0),tg=com.reduce((s,x)=>s+Number(x.monto||0),0);
  const anterior={...c};
  const actualizado={...c,estado:'cerrada',total_ventas:tv,total_compras:tg,total_cierre:tv-tg,recerrado_at:ahoraISO(),cerrado_por:usuarioActual.id,cerrado_email:usuarioActual.email||'',cerrado_rol:usuarioActual.rol||'',cerrado_at:ahoraISO()};
