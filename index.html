@@ -8,7 +8,7 @@
 <title>Gym Manager - V16</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f6f8;color:#17202a}
-button,input,select{font:inherit}.app{display:flex;min-height:100vh}.sidebar{width:245px;background:#111827;color:#fff;padding:22px 14px;position:fixed;inset:0 auto 0 0}.brand{font-size:22px;font-weight:800;padding:0 12px 25px}.brand span{color:#22c55e}.nav button{width:100%;border:0;background:transparent;color:#cbd5e1;text-align:left;padding:12px;border-radius:9px;margin:3px 0;cursor:pointer}.nav button:hover,.nav button.active{background:#1f2937;color:#fff}.main{margin-left:245px;width:calc(100% - 245px);padding:25px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.top h1{margin:0}.date{background:#fff;padding:10px 14px;border-radius:10px;border:1px solid #e5e7eb}.section{display:none}.section.active{display:block}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px}.card small{color:#64748b}.card strong{display:block;font-size:25px;margin-top:8px}.panel{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:20px;margin-top:18px}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}.toolbar input,.toolbar select,input,select{padding:10px;border:1px solid #d1d5db;border-radius:8px;background:#fff}.toolbar input{min-width:240px}.btn{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:700}.primary{background:#16a34a;color:#fff}.dark{background:#111827;color:#fff}.danger{background:#fee2e2;color:#b91c1c}.muted{background:#e5e7eb;color:#111827}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:11px;border-bottom:1px solid #eef2f5;font-size:14px}th{background:#f8fafc}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.form-group label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}.form-group input,.form-group select{width:100%}.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:20px}.modal.open{display:flex}.modal-box{background:#fff;border-radius:16px;padding:22px;width:min(720px,100%);max-height:90vh;overflow:auto}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.close{border:0;background:none;font-size:24px;cursor:pointer}.report-box{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.report-box .card strong{font-size:21px}.pill{display:inline-block;padding:5px 9px;border-radius:99px;background:#dcfce7;color:#166534;font-size:12px;font-weight:700}.expired{background:#fee2e2;color:#991b1b}.footer-note{margin-top:20px;color:#64748b;font-size:13px}
+button,input,select{font:inherit}.app{display:flex;min-height:100vh}.sidebar{width:245px;background:#111827;color:#fff;padding:22px 14px;position:fixed;inset:0 auto 0 0}.brand{font-size:22px;font-weight:800;padding:0 12px 25px}.brand span{color:#22c55e}.nav button{width:100%;border:0;background:transparent;color:#cbd5e1;text-align:left;padding:12px;border-radius:9px;margin:3px 0;cursor:pointer}.nav button:hover,.nav button.active{background:#1f2937;color:#fff}.main{margin-left:245px;width:calc(100% - 245px);padding:25px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.top h1{margin:0}.date{background:#fff;padding:10px 14px;border-radius:10px;border:1px solid #e5e7eb}.section{display:none}.section.active{display:block}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px}.card small{color:#64748b}.card strong{display:block;font-size:25px;margin-top:8px}.panel{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:20px;margin-top:18px}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}.toolbar input,.toolbar select,input,select{padding:10px;border:1px solid #d1d5db;border-radius:8px;background:#fff}.toolbar input{min-width:240px}.fila-check{width:18px;height:18px;cursor:pointer}.toolbar .danger{margin-left:auto}.btn{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:700}.primary{background:#16a34a;color:#fff}.dark{background:#111827;color:#fff}.danger{background:#fee2e2;color:#b91c1c}.muted{background:#e5e7eb;color:#111827}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:11px;border-bottom:1px solid #eef2f5;font-size:14px}th{background:#f8fafc}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.form-group label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}.form-group input,.form-group select{width:100%}.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:20px}.modal.open{display:flex}.modal-box{background:#fff;border-radius:16px;padding:22px;width:min(720px,100%);max-height:90vh;overflow:auto}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.close{border:0;background:none;font-size:24px;cursor:pointer}.report-box{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.report-box .card strong{font-size:21px}.pill{display:inline-block;padding:5px 9px;border-radius:99px;background:#dcfce7;color:#166534;font-size:12px;font-weight:700}.expired{background:#fee2e2;color:#991b1b}.footer-note{margin-top:20px;color:#64748b;font-size:13px}
 @media(max-width:900px){.sidebar{width:200px}.main{margin-left:200px;width:calc(100% - 200px)}.cards,.report-box{grid-template-columns:repeat(2,1fr)}}@media(max-width:650px){.sidebar{position:static;width:100%;min-height:auto}.app{display:block}.main{margin:0;width:100%}.cards,.report-box,.grid{grid-template-columns:1fr}.top{align-items:flex-start;gap:10px;flex-direction:column}}
 
 .alerts{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:18px}.alert-card{border:1px solid #fed7aa;background:#fff7ed;border-radius:14px;padding:16px}.alert-card h3{margin:0 0 10px}.alert-item{padding:9px 0;border-bottom:1px solid #fed7aa}.alert-item:last-child{border-bottom:0}.role-badge{display:inline-block;padding:5px 9px;border-radius:99px;background:#dbeafe;color:#1d4ed8;font-size:12px;font-weight:700}.trash-badge{background:#fee2e2;color:#991b1b}.login-screen{position:fixed;inset:0;background:#111827;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}.login-box{background:#fff;border-radius:18px;padding:28px;width:min(420px,100%);box-shadow:0 20px 50px rgba(0,0,0,.25)}.login-box h1{margin-top:0}.user-bar{display:flex;gap:10px;align-items:center}.hidden{display:none!important}.readonly-note{font-size:12px;color:#64748b}.notice{background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:14px;margin:12px 0;color:#1e3a8a}
@@ -79,13 +79,13 @@ button,input,select{font:inherit}.app{display:flex;min-height:100vh}.sidebar{wid
 </section>
 
 <section id="clientes" class="section">
-<div class="panel"><div class="toolbar"><input id="searchClientes" placeholder="🔍 Código, nombre, DNI o celular"><button class="btn primary" onclick="openModal('cliente')">+ Nuevo cliente</button></div>
-<table><thead><tr><th>Código</th><th>Nombre</th><th>DNI</th><th>Celular</th><th>Membresía</th><th>Registrado</th><th>Última actualización</th><th>Acciones</th></tr></thead><tbody id="tablaClientes"></tbody></table></div>
+<div class="panel"><div class="toolbar"><input id="searchClientes" placeholder="🔍 Código, nombre, DNI o celular"><button class="btn primary" onclick="openModal('cliente')">+ Nuevo cliente</button><button id="bulk-cliente" class="btn danger" onclick="eliminarSeleccionados('cliente')" style="display:none">🗑️ Eliminar seleccionados (<span id="bulk-count-cliente">0</span>)</button></div>
+<table><thead><tr><th><input type="checkbox" id="select-all-cliente" onchange="toggleSeleccionTodos('cliente',this.checked)" aria-label="Seleccionar todos"></th><th>Código</th><th>DNI</th><th>Celular</th><th>Membresía</th><th>Registrado</th><th>Última actualización</th><th>Acciones</th></tr></thead><tbody id="tablaClientes"></tbody></table></div>
 </section>
 
 <section id="membresias" class="section">
-<div class="panel"><div class="toolbar"><input id="searchMembresias" placeholder="🔍 Buscar boleta, cliente o membresía"><button class="btn primary" onclick="openModal('membresia')">+ Registrar membresía</button></div>
-<table><thead><tr><th>Boleta</th><th>Cliente</th><th>Membresía</th><th>Inicio</th><th>Fin</th><th>Total</th><th>Pago</th><th>N.º operación</th><th>Registrado</th><th>Acciones</th></tr></thead><tbody id="tablaMembresias"></tbody></table></div>
+<div class="panel"><div class="toolbar"><input id="searchMembresias" placeholder="🔍 Buscar boleta, cliente o membresía"><button class="btn primary" onclick="openModal('membresia')">+ Registrar membresía</button><button id="bulk-membresia" class="btn danger" onclick="eliminarSeleccionados('membresia')" style="display:none">🗑️ Eliminar seleccionados (<span id="bulk-count-membresia">0</span>)</button></div>
+<table><thead><tr><th><input type="checkbox" id="select-all-membresia" onchange="toggleSeleccionTodos('membresia',this.checked)" aria-label="Seleccionar todos"></th><th>Boleta</th><th>Membresía</th><th>Inicio</th><th>Fin</th><th>Total</th><th>Pago</th><th>N.º operación</th><th>Registrado</th><th>Acciones</th></tr></thead><tbody id="tablaMembresias"></tbody></table></div>
 </section>
 
 <section id="asistencia" class="section">
@@ -94,23 +94,23 @@ button,input,select{font:inherit}.app{display:flex;min-height:100vh}.sidebar{wid
 <div class="toolbar"><input id="codigoAsistencia" placeholder="Ingresá código de cliente" oninput="buscarClienteAsistencia()"><button class="btn primary" onclick="registrarAsistencia()">Registrar asistencia de hoy</button></div>
 <div id="infoAsistencia" class="card">Ingresá un código para cargar automáticamente los datos del cliente.</div>
 </div>
-<div class="panel"><div class="toolbar"><input id="searchAsistencia" placeholder="🔍 Buscar código, nombre o fecha"></div>
-<table><thead><tr><th>Código</th><th>Cliente</th><th>Membresía</th><th>Fecha</th><th>Hora exacta</th><th>Acciones</th></tr></thead><tbody id="tablaAsistencia"></tbody></table></div>
+<div class="panel"><div class="toolbar"><input id="searchAsistencia" placeholder="🔍 Buscar código, nombre o fecha"><button id="bulk-asistencia" class="btn danger" onclick="eliminarSeleccionados('asistencia')" style="display:none">🗑️ Eliminar seleccionados (<span id="bulk-count-asistencia">0</span>)</button></div>
+<table><thead><tr><th><input type="checkbox" id="select-all-asistencia" onchange="toggleSeleccionTodos('asistencia',this.checked)" aria-label="Seleccionar todos"></th><th>Código</th><th>Cliente</th><th>Membresía</th><th>Fecha</th><th>Hora exacta</th><th>Acciones</th></tr></thead><tbody id="tablaAsistencia"></tbody></table></div>
 </section>
 
 <section id="productos" class="section">
-<div class="panel"><div class="toolbar"><input id="searchProductos" placeholder="🔍 Código o nombre"><button class="btn primary" onclick="openModal('producto')">+ Nuevo producto</button></div>
-<table><thead><tr><th>Código</th><th>Producto</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Registrado</th><th>Última actualización</th><th>Acciones</th></tr></thead><tbody id="tablaProductos"></tbody></table></div>
+<div class="panel"><div class="toolbar"><input id="searchProductos" placeholder="🔍 Código o nombre"><button class="btn primary" onclick="openModal('producto')">+ Nuevo producto</button><button id="bulk-producto" class="btn danger" onclick="eliminarSeleccionados('producto')" style="display:none">🗑️ Eliminar seleccionados (<span id="bulk-count-producto">0</span>)</button></div>
+<table><thead><tr><th><input type="checkbox" id="select-all-producto" onchange="toggleSeleccionTodos('producto',this.checked)" aria-label="Seleccionar todos"></th><th>Código</th><th>Producto</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Registrado</th><th>Última actualización</th><th>Acciones</th></tr></thead><tbody id="tablaProductos"></tbody></table></div>
 </section>
 
 <section id="ventas" class="section">
-<div class="panel"><div class="toolbar"><input id="searchVentas" placeholder="🔍 Producto, fecha, operación o tipo"><button class="btn primary" onclick="openModal('venta')">+ Registrar venta</button></div>
-<table><thead><tr><th>Fecha</th><th>Hora exacta</th><th>Producto</th><th>Categoría</th><th>Cantidad</th><th>Total</th><th>Pago</th><th>N.º operación</th><th>Tipo</th><th>Acciones</th></tr></thead><tbody id="tablaVentas"></tbody></table></div>
+<div class="panel"><div class="toolbar"><input id="searchVentas" placeholder="🔍 Producto, fecha, operación o tipo"><button class="btn primary" onclick="openModal('venta')">+ Registrar venta</button><button id="bulk-venta" class="btn danger" onclick="eliminarSeleccionados('venta')" style="display:none">🗑️ Eliminar seleccionados (<span id="bulk-count-venta">0</span>)</button></div>
+<table><thead><tr><th><input type="checkbox" id="select-all-venta" onchange="toggleSeleccionTodos('venta',this.checked)" aria-label="Seleccionar todos"></th><th>Fecha</th><th>Hora exacta</th><th>Producto</th><th>Categoría</th><th>Cantidad</th><th>Total</th><th>Pago</th><th>N.º operación</th><th>Tipo</th><th>Acciones</th></tr></thead><tbody id="tablaVentas"></tbody></table></div>
 </section>
 
 <section id="compras" class="section">
-<div class="panel"><div class="toolbar"><input id="searchCompras" placeholder="🔍 Tipo o descripción"><button class="btn primary" onclick="openModal('compra')">+ Registrar compra</button></div>
-<table><thead><tr><th>Fecha</th><th>Hora exacta</th><th>Tipo</th><th>Descripción</th><th>Monto</th><th>Pago</th><th>N.º operación</th><th>Acciones</th></tr></thead><tbody id="tablaCompras"></tbody></table></div>
+<div class="panel"><div class="toolbar"><input id="searchCompras" placeholder="🔍 Tipo o descripción"><button class="btn primary" onclick="openModal('compra')">+ Registrar compra</button><button id="bulk-compra" class="btn danger" onclick="eliminarSeleccionados('compra')" style="display:none">🗑️ Eliminar seleccionados (<span id="bulk-count-compra">0</span>)</button></div>
+<table><thead><tr><th><input type="checkbox" id="select-all-compra" onchange="toggleSeleccionTodos('compra',this.checked)" aria-label="Seleccionar todos"></th><th>Fecha</th><th>Hora exacta</th><th>Tipo</th><th>Descripción</th><th>Monto</th><th>Pago</th><th>N.º operación</th><th>Acciones</th></tr></thead><tbody id="tablaCompras"></tbody></table></div>
 </section>
 
 <section id="caja" class="section">
@@ -178,7 +178,7 @@ const membresiaTipos=['Gym Diario','Gym Diario con Caminadora','Gym Mensual','Gy
 const pagos=['Efectivo','Yape','Depósito / Transferencia','Culqi'];
 const categorias=['Cafetín','Accesorios','Suplementos'];
 let db=JSON.parse(localStorage.getItem(KEY)||'{"clientes":[],"membresias":[],"productos":[],"ventas":[],"compras":[],"asistencias":[]}');
-let edit={type:null,id:null}, reporteData=[];
+let edit={type:null,id:null}, reporteData=[]; let seleccionesMasivas={cliente:[],membresia:[],asistencia:[],producto:[],venta:[],compra:[]};
 let papeleraLocal=JSON.parse(localStorage.getItem('gym_papelera_v1')||'[]');
 let historialLocal=JSON.parse(localStorage.getItem('gym_historial_v1')||'[]');
 let cajasCerradasLocal=JSON.parse(localStorage.getItem('gym_cajas_cerradas_v1')||'[]');
@@ -259,36 +259,50 @@ function addDays(date,n){let d=new Date(date+'T12:00:00');d.setDate(d.getDate()+
 function renderAll(){renderClientes();renderMembresias();renderProductos();renderVentas();renderCompras();renderAsistencia();renderDashboard();renderCaja();renderHistorial();renderPapelera();renderUsuarios();aplicarPermisos();}
 function emptyRow(cols,msg='Sin registros'){return `<tr><td colspan="${cols}">${msg}</td></tr>`}
 function actionBtns(type,id){let b=`<button class="btn muted" onclick="editRecord('${type}','${id}')">Editar</button>`; if(usuarioActual?.rol==='administrador') b+=` <button class="btn danger" onclick="deleteRecord('${type}','${id}')">Eliminar</button>`; return b}
+function checkCell(type,id){const marcado=seleccionesMasivas[type]?.includes(String(id));return `<input type="checkbox" class="fila-check" ${marcado?'checked':''} onchange="toggleSeleccion('${type}','${id}',this.checked)" aria-label="Seleccionar registro">`}
+function bulkToolbar(type,searchId,placeholder,addLabel,addAction){return `<div class="toolbar"><input id="${searchId}" placeholder="${placeholder}">${addAction?`<button class="btn primary" onclick="${addAction}">${addLabel}</button>`:''}<button id="bulk-${type}" class="btn danger" onclick="eliminarSeleccionados('${type}')" style="display:none">🗑️ Eliminar seleccionados (<span id="bulk-count-${type}">0</span>)</button></div>`}
+function toggleSeleccion(type,id,checked){const arr=seleccionesMasivas[type]||[];const sid=String(id);if(checked&&!arr.includes(sid))arr.push(sid);if(!checked){const i=arr.indexOf(sid);if(i>=0)arr.splice(i,1)}seleccionesMasivas[type]=arr;actualizarBulkUI(type)}
+function toggleSeleccionTodos(type,checked){const ids=obtenerIdsVisibles(type);seleccionesMasivas[type]=checked?ids.map(String):[];actualizarBulkUI(type);renderPorTipo(type)}
+function obtenerIdsVisibles(type){const qId={cliente:'searchClientes',membresia:'searchMembresias',asistencia:'searchAsistencia',producto:'searchProductos',venta:'searchVentas',compra:'searchCompras'}[type];const q=(document.getElementById(qId)?.value||'').toLowerCase();const key={cliente:'clientes',membresia:'membresias',asistencia:'asistencias',producto:'productos',venta:'ventas',compra:'compras'}[type];const arr=db[key]||[];return arr.filter(r=>{if(type==='cliente')return [r.codigo,r.nombre,r.dni,r.celular].some(v=>String(v).toLowerCase().includes(q));if(type==='membresia')return [r.boleta,r.clienteCodigo,r.clienteNombre,r.tipo].some(v=>String(v).toLowerCase().includes(q));if(type==='asistencia')return [r.codigo,r.nombre,r.fecha].some(v=>String(v).toLowerCase().includes(q));if(type==='producto')return [r.codigo,r.nombre,r.categoria].some(v=>String(v).toLowerCase().includes(q));if(type==='venta')return [r.fecha,r.producto,r.pago,r.numeroOperacion,r.tipoOperacion].some(v=>String(v||'').toLowerCase().includes(q));return [r.fecha,r.tipo,r.descripcion,r.pago,r.numeroOperacion].some(v=>String(v||'').toLowerCase().includes(q));}).map(r=>r.id)}
+function actualizarBulkUI(type){const btn=document.getElementById('bulk-'+type),count=document.getElementById('bulk-count-'+type);if(!btn)return;const n=(seleccionesMasivas[type]||[]).length;btn.style.display=n&&usuarioActual?.rol==='administrador'?'inline-block':'none';if(count)count.textContent=n;const master=document.getElementById('select-all-'+type);if(master){const vis=obtenerIdsVisibles(type).map(String),sel=seleccionesMasivas[type]||[];master.checked=vis.length>0&&vis.every(id=>sel.includes(id));master.indeterminate=sel.length>0&&!master.checked}}
+function renderPorTipo(type){({cliente:renderClientes,membresia:renderMembresias,asistencia:renderAsistencia,producto:renderProductos,venta:renderVentas,compra:renderCompras}[type]||function(){})()}
+
 
 function renderClientes(){
  const q=(document.getElementById('searchClientes')?.value||'').toLowerCase();
  let a=db.clientes.filter(c=>[c.codigo,c.nombre,c.dni,c.celular].some(v=>String(v).toLowerCase().includes(q)));
- document.getElementById('tablaClientes').innerHTML=a.length?a.map(c=>{let m=activeMember(c.codigo);return `<tr><td>${c.codigo}</td><td>${esc(c.nombre)}</td><td>${esc(c.dni)}</td><td>${esc(c.celular)}</td><td>${m?esc(m.tipo):'—'}</td><td>${esc(fechaHora(c,'registrado_at'))}</td><td>${esc(fechaHora(c,'actualizado_at'))}</td><td>${actionBtns('cliente',c.id)}</td></tr>`}).join(''):emptyRow(8);
+ document.getElementById('tablaClientes').innerHTML=a.length?a.map(c=>{let m=activeMember(c.codigo);return `<tr><td>${checkCell('cliente',c.id)}</td><td>${c.codigo}</td><td>${esc(c.nombre)}</td><td>${esc(c.dni)}</td><td>${esc(c.celular)}</td><td>${m?esc(m.tipo):'—'}</td><td>${esc(fechaHora(c,'registrado_at'))}</td><td>${esc(fechaHora(c,'actualizado_at'))}</td><td>${actionBtns('cliente',c.id)}</td></tr>`}).join(''):emptyRow(9);
+ actualizarBulkUI('cliente');
 }
 function renderMembresias(){
  const q=(document.getElementById('searchMembresias')?.value||'').toLowerCase();
  let a=db.membresias.filter(m=>[m.boleta,m.clienteCodigo,m.clienteNombre,m.tipo].some(v=>String(v).toLowerCase().includes(q)));
- document.getElementById('tablaMembresias').innerHTML=a.length?a.map(m=>`<tr><td>${esc(m.boleta)}</td><td>${esc(m.clienteNombre||'—')}</td><td>${esc(m.tipo)}</td><td>${m.inicio}</td><td>${m.fin}</td><td>${money(m.total)}</td><td>${esc(m.pago)}</td><td>${esc(m.numeroOperacion||'—')}</td><td>${esc(fechaHora(m,'registrado_at'))}</td><td>${actionBtns('membresia',m.id)}</td></tr>`).join(''):emptyRow(10);
+ document.getElementById('tablaMembresias').innerHTML=a.length?a.map(m=>`<tr><td>${checkCell('membresia',m.id)}</td><td>${esc(m.boleta)}</td><td>${esc(m.clienteNombre||'—')}</td><td>${esc(m.tipo)}</td><td>${m.inicio}</td><td>${m.fin}</td><td>${money(m.total)}</td><td>${esc(m.pago)}</td><td>${esc(m.numeroOperacion||'—')}</td><td>${esc(fechaHora(m,'registrado_at'))}</td><td>${actionBtns('membresia',m.id)}</td></tr>`).join(''):emptyRow(11);
+ actualizarBulkUI('membresia');
 }
 function renderProductos(){
  const q=(document.getElementById('searchProductos')?.value||'').toLowerCase();
  let a=db.productos.filter(p=>[p.codigo,p.nombre,p.categoria].some(v=>String(v).toLowerCase().includes(q)));
- document.getElementById('tablaProductos').innerHTML=a.length?a.map(p=>`<tr><td>${p.codigo}</td><td>${esc(p.nombre)}</td><td>${esc(p.categoria)}</td><td>${money(p.precio)}</td><td>${p.stock}</td><td>${esc(fechaHora(p,'registrado_at'))}</td><td>${esc(fechaHora(p,'actualizado_at'))}</td><td>${actionBtns('producto',p.id)}</td></tr>`).join(''):emptyRow(8);
+ document.getElementById('tablaProductos').innerHTML=a.length?a.map(p=>`<tr><td>${checkCell('producto',p.id)}</td><td>${p.codigo}</td><td>${esc(p.nombre)}</td><td>${esc(p.categoria)}</td><td>${money(p.precio)}</td><td>${p.stock}</td><td>${esc(fechaHora(p,'registrado_at'))}</td><td>${esc(fechaHora(p,'actualizado_at'))}</td><td>${actionBtns('producto',p.id)}</td></tr>`).join(''):emptyRow(9);
+ actualizarBulkUI('producto');
 }
 function renderVentas(){
  const q=(document.getElementById('searchVentas')?.value||'').toLowerCase();
  let a=db.ventas.filter(v=>[v.fecha,v.producto,v.pago,v.numeroOperacion,v.tipoOperacion].some(x=>String(x||'').toLowerCase().includes(q)));
- document.getElementById('tablaVentas').innerHTML=a.length?a.map(v=>`<tr><td>${v.fecha}</td><td>${esc(horaExacta(v,'registrado_at'))}</td><td>${esc(v.producto)}</td><td>${esc(v.categoria)}</td><td>${v.cantidad}</td><td>${money(v.total)}</td><td>${esc(v.pago)}</td><td>${esc(v.numeroOperacion||'—')}</td><td>${esc(v.tipoOperacion||'Venta')}</td><td>${actionBtns('venta',v.id)}</td></tr>`).join(''):emptyRow(10);
+ document.getElementById('tablaVentas').innerHTML=a.length?a.map(v=>`<tr><td>${checkCell('venta',v.id)}</td><td>${v.fecha}</td><td>${esc(horaExacta(v,'registrado_at'))}</td><td>${esc(v.producto)}</td><td>${esc(v.categoria)}</td><td>${v.cantidad}</td><td>${money(v.total)}</td><td>${esc(v.pago)}</td><td>${esc(v.numeroOperacion||'—')}</td><td>${esc(v.tipoOperacion||'Venta')}</td><td>${actionBtns('venta',v.id)}</td></tr>`).join(''):emptyRow(11);
+ actualizarBulkUI('venta');
 }
 function renderCompras(){
  const q=(document.getElementById('searchCompras')?.value||'').toLowerCase();
  let a=db.compras.filter(c=>[c.fecha,c.tipo,c.descripcion,c.pago,c.numeroOperacion].some(x=>String(x||'').toLowerCase().includes(q)));
- document.getElementById('tablaCompras').innerHTML=a.length?a.map(c=>`<tr><td>${c.fecha}</td><td>${esc(horaExacta(c,'registrado_at'))}</td><td>${esc(c.tipo)}</td><td>${esc(c.descripcion)}</td><td>${money(c.monto)}</td><td>${esc(c.pago)}</td><td>${esc(c.numeroOperacion||'—')}</td><td>${actionBtns('compra',c.id)}</td></tr>`).join(''):emptyRow(8);
+ document.getElementById('tablaCompras').innerHTML=a.length?a.map(c=>`<tr><td>${checkCell('compra',c.id)}</td><td>${c.fecha}</td><td>${esc(horaExacta(c,'registrado_at'))}</td><td>${esc(c.tipo)}</td><td>${esc(c.descripcion)}</td><td>${money(c.monto)}</td><td>${esc(c.pago)}</td><td>${esc(c.numeroOperacion||'—')}</td><td>${actionBtns('compra',c.id)}</td></tr>`).join(''):emptyRow(9);
+ actualizarBulkUI('compra');
 }
 function renderAsistencia(){
  const q=(document.getElementById('searchAsistencia')?.value||'').toLowerCase();
  let a=db.asistencias.filter(x=>[x.codigo,x.nombre,x.fecha].some(v=>String(v).toLowerCase().includes(q)));
- document.getElementById('tablaAsistencia').innerHTML=a.length?a.map(x=>`<tr><td>${x.codigo}</td><td>${esc(x.nombre)}</td><td>${esc(x.membresia)}</td><td>${x.fecha}</td><td>${esc(horaExacta(x,'registrado_at'))}</td><td>${actionBtns('asistencia',x.id)}</td></tr>`).join(''):emptyRow(6);
+ document.getElementById('tablaAsistencia').innerHTML=a.length?a.map(x=>`<tr><td>${checkCell('asistencia',x.id)}</td><td>${x.codigo}</td><td>${esc(x.nombre)}</td><td>${esc(x.membresia)}</td><td>${x.fecha}</td><td>${esc(horaExacta(x,'registrado_at'))}</td><td>${actionBtns('asistencia',x.id)}</td></tr>`).join(''):emptyRow(7);
+ actualizarBulkUI('asistencia');
 }
 function renderDashboard(){
  document.getElementById('kClientes').textContent=db.clientes.length;
@@ -533,6 +547,35 @@ async function deleteRecord(type,id){if(usuarioActual?.rol!=='administrador')ret
   // Al eliminar una venta/consumo, devolvemos automáticamente las unidades al stock.
   if(type==='venta'){const producto=db.productos.find(p=>p.id===antes.productoId);if(producto){producto.stock=Number(producto.stock||0)+Number(antes.cantidad||0);}}
   await moverAPapelera(type,id,antes);db[key]=db[key].filter(x=>x.id!==id);await registrarHistorial(type,'ELIMINAR',id,type==='venta'?'Venta eliminada y stock restaurado.':'Registro enviado a papelera por 30 días',antes,null);await save()}
+async function eliminarSeleccionados(type){
+ if(usuarioActual?.rol!=='administrador')return alert('Solo los administradores pueden eliminar registros.');
+ const ids=[...(seleccionesMasivas[type]||[])];
+ if(!ids.length)return alert('Seleccioná al menos un registro.');
+ const key=type==='cliente'?'clientes':type==='membresia'?'membresias':type==='producto'?'productos':type==='venta'?'ventas':type==='compra'?'compras':'asistencias';
+ const registros=ids.map(id=>db[key].find(x=>String(x.id)===String(id))).filter(Boolean);
+ if(!registros.length)return;
+ if(!confirm(`¿Enviar ${registros.length} registro(s) seleccionados a la papelera por 30 días?`))return;
+ // Si alguna operación pertenece a una caja cerrada, se solicita abrirla antes de continuar.
+ const fechas=[...new Set(registros.map(r=>fechaDeRegistro(type,r)).filter(Boolean))];
+ for(const fecha of fechas){
+   const afectados=registros.some(r=>fechaDeRegistro(type,r)===fecha&&registroBloqueadoPorCaja(type,r));
+   if(afectados&&!confirmarCorreccionCaja(fecha))return;
+ }
+ for(const antes of registros){
+   const id=antes.id;
+   if(type==='venta'){
+     const producto=db.productos.find(p=>p.id===antes.productoId);
+     if(producto)producto.stock=Number(producto.stock||0)+Number(antes.cantidad||0);
+   }
+   await moverAPapelera(type,id,antes);
+   db[key]=db[key].filter(x=>x.id!==id);
+   await registrarHistorial(type,'ELIMINAR',id,type==='venta'?'Venta eliminada y stock restaurado.':'Registro enviado a papelera por 30 días',antes,null);
+ }
+ seleccionesMasivas[type]=[];
+ await save();
+ renderPorTipo(type);
+ alert(`${registros.length} registro(s) enviado(s) a la papelera correctamente.`);
+}
 function editRecord(type,id){openModal(type,id)}
 function aplicarPermisos(){
  const admin=usuarioActual?.rol==='administrador'; document.getElementById('navPapelera')?.classList.toggle('hidden',!admin); document.getElementById('navUsuarios')?.classList.toggle('hidden',!admin);
