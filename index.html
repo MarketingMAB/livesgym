@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>Gym Manager - V16</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f6f8;color:#17202a}
+button,input,select{font:inherit}.app{display:flex;min-height:100vh}.sidebar{width:245px;background:#111827;color:#fff;padding:22px 14px;position:fixed;inset:0 auto 0 0}.brand{font-size:22px;font-weight:800;padding:0 12px 25px}.brand span{color:#22c55e}.nav button{width:100%;border:0;background:transparent;color:#cbd5e1;text-align:left;padding:12px;border-radius:9px;margin:3px 0;cursor:pointer}.nav button:hover,.nav button.active{background:#1f2937;color:#fff}.main{margin-left:245px;width:calc(100% - 245px);padding:25px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.top h1{margin:0}.date{background:#fff;padding:10px 14px;border-radius:10px;border:1px solid #e5e7eb}.section{display:none}.section.active{display:block}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px}.card small{color:#64748b}.card strong{display:block;font-size:25px;margin-top:8px}.panel{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:20px;margin-top:18px}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}.toolbar input,.toolbar select,input,select{padding:10px;border:1px solid #d1d5db;border-radius:8px;background:#fff}.toolbar input{min-width:240px}.btn{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:700}.primary{background:#16a34a;color:#fff}.dark{background:#111827;color:#fff}.danger{background:#fee2e2;color:#b91c1c}.muted{background:#e5e7eb;color:#111827}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:11px;border-bottom:1px solid #eef2f5;font-size:14px}th{background:#f8fafc}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.form-group label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}.form-group input,.form-group select{width:100%}.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:20px}.modal.open{display:flex}.modal-box{background:#fff;border-radius:16px;padding:22px;width:min(720px,100%);max-height:90vh;overflow:auto}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.close{border:0;background:none;font-size:24px;cursor:pointer}.report-box{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.report-box .card strong{font-size:21px}.pill{display:inline-block;padding:5px 9px;border-radius:99px;background:#dcfce7;color:#166534;font-size:12px;font-weight:700}.expired{background:#fee2e2;color:#991b1b}.footer-note{margin-top:20px;color:#64748b;font-size:13px}
+@media(max-width:900px){.sidebar{width:200px}.main{margin-left:200px;width:calc(100% - 200px)}.cards,.report-box{grid-template-columns:repeat(2,1fr)}}@media(max-width:650px){.sidebar{position:static;width:100%;min-height:auto}.app{display:block}.main{margin:0;width:100%}.cards,.report-box,.grid{grid-template-columns:1fr}.top{align-items:flex-start;gap:10px;flex-direction:column}}
+
+.alerts{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:18px}.alert-card{border:1px solid #fed7aa;background:#fff7ed;border-radius:14px;padding:16px}.alert-card h3{margin:0 0 10px}.alert-item{padding:9px 0;border-bottom:1px solid #fed7aa}.alert-item:last-child{border-bottom:0}.role-badge{display:inline-block;padding:5px 9px;border-radius:99px;background:#dbeafe;color:#1d4ed8;font-size:12px;font-weight:700}.trash-badge{background:#fee2e2;color:#991b1b}.login-screen{position:fixed;inset:0;background:#111827;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}.login-box{background:#fff;border-radius:18px;padding:28px;width:min(420px,100%);box-shadow:0 20px 50px rgba(0,0,0,.25)}.login-box h1{margin-top:0}.user-bar{display:flex;gap:10px;align-items:center}.hidden{display:none!important}.readonly-note{font-size:12px;color:#64748b}.notice{background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:14px;margin:12px 0;color:#1e3a8a}
+
+.historial-panel{overflow:hidden}.historial-table-wrap{overflow:auto}.historial-table{min-width:1050px}.historial-table th{white-space:nowrap}.historial-table td{vertical-align:top}.historial-table td:nth-child(1){width:145px}.historial-table td:nth-child(2){width:190px}.historial-table td:nth-child(3){width:110px}.historial-table td:nth-child(4){width:100px}.historial-table td:nth-child(5){width:100px}.historial-table td:nth-child(6){min-width:210px}.historial-table td:nth-child(7){min-width:320px}.historial-table td:nth-child(8){min-width:180px}.audit-user{font-weight:700}.audit-role{font-size:11px;color:#64748b;text-transform:uppercase}.audit-action{display:inline-block;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800}.audit-create{background:#dcfce7;color:#166534}.audit-edit{background:#dbeafe;color:#1d4ed8}.audit-delete{background:#fee2e2;color:#991b1b}.audit-restore{background:#fef3c7;color:#92400e}.audit-change{display:flex;flex-direction:column;gap:5px}.change-row{display:grid;grid-template-columns:minmax(105px,130px) 1fr;gap:8px;padding:7px 9px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px}.change-label{font-weight:700;color:#334155}.change-values{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.change-old{color:#991b1b;text-decoration:line-through}.change-new{color:#166534;font-weight:800}.change-arrow{color:#64748b}.audit-summary{color:#475569;line-height:1.45}.audit-view{white-space:nowrap}.audit-detail-modal .modal-box{width:min(820px,100%)}.audit-detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}.audit-detail-card{background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px}.audit-detail-card small{display:block;color:#64748b;margin-bottom:4px}.audit-detail-card strong{font-size:14px}.audit-full-changes{display:flex;flex-direction:column;gap:8px}.audit-full-changes .change-row{grid-template-columns:160px 1fr}.audit-empty{color:#64748b}
+
+.historial-panel{overflow:hidden}.historial-table-wrap{overflow:auto}.historial-table{min-width:980px;table-layout:fixed}.historial-table th:nth-child(1){width:135px}.historial-table th:nth-child(2){width:170px}.historial-table th:nth-child(3){width:115px}.historial-table th:nth-child(4){width:100px}.historial-table th:nth-child(5){width:95px}.historial-table th:nth-child(6){width:210px}.historial-table th:nth-child(7){width:180px}.historial-table td{vertical-align:top;word-break:break-word}.audit-summary{line-height:1.35}.audit-view{white-space:nowrap}.change-row{display:grid;grid-template-columns:80px 1fr;gap:8px;padding:6px 0;border-bottom:1px solid #eef2f5}.change-row:last-child{border-bottom:0}.change-label{font-weight:700;color:#475569}.change-values{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.change-old{color:#991b1b;text-decoration:line-through;background:#fef2f2;padding:2px 5px;border-radius:5px}.change-new{color:#166534;background:#f0fdf4;padding:2px 5px;border-radius:5px;font-weight:700}.change-arrow{color:#64748b;font-weight:700}.audit-change{background:#f8fafc;border:1px solid #e2e8f0;border-radius:9px;padding:6px 9px}.audit-empty{color:#64748b;font-size:12px}
+
+.caja-estado{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:14px 0;padding:14px;border-radius:12px;background:#f8fafc;border:1px solid #e5e7eb}.estado-cerrada{background:#dcfce7;color:#166534}.estado-abierta{background:#fef3c7;color:#92400e}.estado-correccion{background:#dbeafe;color:#1d4ed8}.caja-info{font-size:13px;color:#64748b}.btn-warning{background:#f59e0b;color:#fff}.audit-time{font-size:12px;color:#64748b;white-space:nowrap}.correction-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:14px;margin-top:12px}.correction-box textarea{width:100%;min-height:80px;padding:10px;border:1px solid #cbd5e1;border-radius:8px}.audit-change-grid{width:100%;border-collapse:separate;border-spacing:0}.audit-change-grid th,.audit-change-grid td{border:1px solid #e5e7eb}.audit-change-grid .before{color:#b91c1c;background:#fff7f7}.audit-change-grid .after{color:#166534;background:#f0fdf4}.audit-created{padding:12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;color:#1e40af}
+.caja-estado{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:14px 0;padding:14px;border-radius:12px;background:#f8fafc;border:1px solid #e5e7eb}.estado-cerrada{background:#dcfce7;color:#166534}.estado-abierta{background:#fef3c7;color:#92400e}.estado-correccion{background:#dbeafe;color:#1d4ed8}.caja-info{font-size:13px;color:#64748b}.btn-warning{background:#f59e0b;color:#fff}.audit-time{font-size:12px;color:#64748b;white-space:nowrap}.correction-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:14px;margin-top:12px}.audit-change-grid{width:100%;border-collapse:separate;border-spacing:0}.audit-change-grid th,.audit-change-grid td{border:1px solid #e5e7eb}.audit-change-grid .before{color:#b91c1c;background:#fff7f7}.audit-change-grid .after{color:#166534;background:#f0fdf4}.audit-created{padding:12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;color:#1e40af} th,td{vertical-align:top}.audit-table td,.historial-table td{white-space:normal}.historial-table th:nth-child(1),.historial-table th:nth-child(2),.historial-table th:nth-child(3){white-space:nowrap}</style>
+</head>
+<body>
+<div id="loginScreen" class="login-screen">
+ <div class="login-box">
+  <h1>GYM <span style="color:#16a34a">MANAGER</span></h1>
+  <p>Ingresá con tu cuenta para acceder al sistema.</p>
+  <form id="loginForm">
+   <div class="form-group"><label>Correo</label><input id="loginEmail" type="email" required autocomplete="username"></div>
+   <div class="form-group" style="margin-top:12px"><label>Contraseña</label><input id="loginPassword" type="password" required autocomplete="current-password"></div>
+   <button class="btn primary" style="width:100%;margin-top:16px">Ingresar</button>
+  </form>
+  <p id="loginMsg" class="footer-note"></p><p class="footer-note" style="margin-top:8px">🔐 Por seguridad, al cerrar esta pestaña o cerrar sesión deberás ingresar nuevamente.</p>
+ </div>
+</div>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand">GYM <span>MANAGER</span></div>
+  <nav class="nav">
+    <button class="active" data-section="dashboard">📊 Dashboard</button>
+    <button data-section="clientes">👤 Clientes</button>
+    <button data-section="membresias">🧾 Membresías / Boletas</button>
+    <button data-section="asistencia">✅ Asistencia</button>
+    <button data-section="productos">📦 Productos</button>
+    <button data-section="ventas">💰 Ventas</button>
+    <button data-section="compras">🛒 Compras</button>
+    <button data-section="caja">💵 Caja</button>
+    <button data-section="reportes">📑 Reportes</button>
+    <button data-section="historial">🕘 Historial</button>
+    <button data-section="papelera" id="navPapelera">🗑️ Papelera</button>
+    <button data-section="usuarios" id="navUsuarios">👥 Usuarios</button>
+  </nav>
+</aside>
+
+<main class="main">
+<div class="top"><h1 id="pageTitle">Dashboard</h1><div class="user-bar"><span id="userRole" class="role-badge">—</span><span id="userEmail" class="date">—</span><button class="btn muted" onclick="cerrarSesion()">Salir</button></div></div>
+
+<section id="dashboard" class="section active">
+  <div class="cards">
+    <div class="card"><small>Clientes</small><strong id="kClientes">0</strong></div>
+    <div class="card"><small>Membresías activas</small><strong id="kMembresias">0</strong></div>
+    <div class="card"><small>Asistencias hoy</small><strong id="kAsistencias">0</strong></div>
+    <div class="card"><small>Ventas de productos hoy</small><strong id="kVentas">S/ 0.00</strong></div>
+  </div>
+  <div class="alerts">
+ <div class="alert-card"><h3>⏳ Membresías por vencer</h3><div id="alertasMembresias">Sin alertas.</div></div>
+ <div class="alert-card"><h3>📦 Stock bajo</h3><div id="alertasStock">Sin alertas.</div></div>
+</div>
+<div class="panel">
+    <h2>Resumen rápido</h2>
+    <p>Demo funcional del sistema. Los datos se guardan en el navegador mediante <b>localStorage</b>.</p>
+    <div class="report-box">
+      <div class="card"><small>Ingresos membresías</small><strong id="dMem">S/ 0.00</strong></div>
+      <div class="card"><small>Ingresos productos</small><strong id="dProd">S/ 0.00</strong></div>
+      <div class="card"><small>Compras</small><strong id="dCompras">S/ 0.00</strong></div>
+      <div class="card"><small>Cierre estimado</small><strong id="dCierre">S/ 0.00</strong></div>
+    </div>
+  </div>
+</section>
+
+<section id="clientes" class="section">
+<div class="panel"><div class="toolbar"><input id="searchClientes" placeholder="🔍 Código, nombre, DNI o celular"><button class="btn primary" onclick="openModal('cliente')">+ Nuevo cliente</button></div>
+<table><thead><tr><th>Código</th><th>Nombre</th><th>DNI</th><th>Celular</th><th>Membresía</th><th>Registrado</th><th>Última actualización</th><th>Acciones</th></tr></thead><tbody id="tablaClientes"></tbody></table></div>
+</section>
+
+<section id="membresias" class="section">
+<div class="panel"><div class="toolbar"><input id="searchMembresias" placeholder="🔍 Buscar boleta, cliente o membresía"><button class="btn primary" onclick="openModal('membresia')">+ Registrar membresía</button></div>
+<table><thead><tr><th>Boleta</th><th>Cliente</th><th>Membresía</th><th>Inicio</th><th>Fin</th><th>Total</th><th>Pago</th><th>N.º operación</th><th>Registrado</th><th>Acciones</th></tr></thead><tbody id="tablaMembresias"></tbody></table></div>
+</section>
+
+<section id="asistencia" class="section">
+<div class="panel">
+<h2>Registrar asistencia rápida</h2>
+<div class="toolbar"><input id="codigoAsistencia" placeholder="Ingresá código de cliente" oninput="buscarClienteAsistencia()"><button class="btn primary" onclick="registrarAsistencia()">Registrar asistencia de hoy</button></div>
+<div id="infoAsistencia" class="card">Ingresá un código para cargar automáticamente los datos del cliente.</div>
+</div>
+<div class="panel"><div class="toolbar"><input id="searchAsistencia" placeholder="🔍 Buscar código, nombre o fecha"></div>
+<table><thead><tr><th>Código</th><th>Cliente</th><th>Membresía</th><th>Fecha</th><th>Hora exacta</th><th>Acciones</th></tr></thead><tbody id="tablaAsistencia"></tbody></table></div>
+</section>
+
+<section id="productos" class="section">
+<div class="panel"><div class="toolbar"><input id="searchProductos" placeholder="🔍 Código o nombre"><button class="btn primary" onclick="openModal('producto')">+ Nuevo producto</button></div>
+<table><thead><tr><th>Código</th><th>Producto</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Registrado</th><th>Última actualización</th><th>Acciones</th></tr></thead><tbody id="tablaProductos"></tbody></table></div>
+</section>
+
+<section id="ventas" class="section">
+<div class="panel"><div class="toolbar"><input id="searchVentas" placeholder="🔍 Producto, fecha, operación o tipo"><button class="btn primary" onclick="openModal('venta')">+ Registrar venta</button></div>
+<table><thead><tr><th>Fecha</th><th>Hora exacta</th><th>Producto</th><th>Categoría</th><th>Cantidad</th><th>Total</th><th>Pago</th><th>N.º operación</th><th>Tipo</th><th>Acciones</th></tr></thead><tbody id="tablaVentas"></tbody></table></div>
+</section>
+
+<section id="compras" class="section">
+<div class="panel"><div class="toolbar"><input id="searchCompras" placeholder="🔍 Tipo o descripción"><button class="btn primary" onclick="openModal('compra')">+ Registrar compra</button></div>
+<table><thead><tr><th>Fecha</th><th>Hora exacta</th><th>Tipo</th><th>Descripción</th><th>Monto</th><th>Pago</th><th>N.º operación</th><th>Acciones</th></tr></thead><tbody id="tablaCompras"></tbody></table></div>
+</section>
+
+<section id="caja" class="section">
+<div class="panel"><div class="toolbar"><label>Fecha de caja <input type="date" id="fechaCaja"></label><button class="btn dark" onclick="renderCaja()">Actualizar caja</button><button class="btn primary" onclick="exportarCajaExcel()">📊 Exportar Caja a Excel</button></div><div id="estadoCaja" class="caja-estado"></div><div id="estadoCaja" class="caja-estado"></div>
+<h2>Cierre de Caja</h2>
+<div class="cards">
+<div class="card"><small>Total membresías</small><strong id="cMem">S/ 0.00</strong></div>
+<div class="card"><small>Total productos</small><strong id="cProd">S/ 0.00</strong></div>
+<div class="card"><small>Total ventas</small><strong id="cVentas">S/ 0.00</strong></div>
+<div class="card"><small>Compras</small><strong id="cCompras">S/ 0.00</strong></div>
+</div>
+<div class="panel"><h3>1. Cantidad y total ingresado</h3><p class="footer-note">Aquí se muestra cuánto se vendió de cada membresía y de cada producto, junto con el dinero generado.</p><table><thead><tr><th>Sección</th><th>Concepto</th><th>Cantidad</th><th>Total ingresado</th></tr></thead><tbody id="tablaCantidadesCaja"></tbody></table></div>
+<div class="panel"><h3>2. Ingresos por membresías</h3><table><thead><tr><th>Membresía</th><th>Efectivo</th><th>Yape</th><th>Depósito</th><th>Culqi</th><th>Total</th></tr></thead><tbody id="tablaCajaMembresias"></tbody></table></div>
+<div class="panel"><h3>3. Ingresos por Cafetín</h3><table><thead><tr><th>Producto</th><th>Efectivo</th><th>Yape</th><th>Depósito</th><th>Culqi</th><th>Total</th></tr></thead><tbody id="tablaCajaCafetín"></tbody></table></div>
+<div class="panel"><h3>4. Ingresos por Accesorios</h3><table><thead><tr><th>Producto</th><th>Efectivo</th><th>Yape</th><th>Depósito</th><th>Culqi</th><th>Total</th></tr></thead><tbody id="tablaCajaAccesorios"></tbody></table></div>
+<div class="panel"><h3>5. Ingresos por Suplementos</h3><table><thead><tr><th>Producto</th><th>Efectivo</th><th>Yape</th><th>Depósito</th><th>Culqi</th><th>Total</th></tr></thead><tbody id="tablaCajaSuplementos"></tbody></table></div>
+<div class="panel"><h3>6. Total por medio de pago</h3><table><thead><tr><th>Medio de pago</th><th>Total generado</th></tr></thead><tbody id="tablaPagos"></tbody></table></div>
+<div class="panel"><h3>7. Compras</h3><table><thead><tr><th>Tipo</th><th>Descripción</th><th>Monto</th><th>Medio de pago</th><th>N.º de operación</th></tr></thead><tbody id="tablaComprasCaja"></tbody></table></div>
+<div class="panel"><h3>8. Cierre de caja</h3><div class="report-box"><div class="card"><small>Total obtenido de ventas</small><strong id="cTotal">S/ 0.00</strong></div><div class="card"><small>Compras</small><strong id="cGasto">S/ 0.00</strong></div><div class="card"><small>Total cierre</small><strong id="cCierre">S/ 0.00</strong></div></div></div>
+</div>
+</section>
+
+<section id="historial" class="section">
+<div class="panel historial-panel">
+  <div class="toolbar"><input id="searchHistorial" placeholder="🔍 Usuario, módulo, acción, registro o detalle"><button class="btn dark" onclick="renderHistorial()">Actualizar</button></div>
+  <div class="historial-table-wrap">
+    <table class="historial-table"><thead><tr><th>Fecha</th><th>Usuario</th><th>Rol</th><th>Módulo</th><th>Acción</th><th>Registro</th><th>Cambios</th></tr></thead><tbody id="tablaHistorial"></tbody></table>
+  </div>
+</div>
+</section>
+
+<section id="papelera" class="section">
+<div class="panel"><p class="footer-note">Los registros eliminados se conservan durante <b>30 días</b>. Solo un administrador puede restaurarlos o eliminarlos definitivamente.</p>
+<table><thead><tr><th>Eliminado</th><th>Módulo</th><th>Registro</th><th>Usuario</th><th>Vence</th><th>Acciones</th></tr></thead><tbody id="tablaPapelera"></tbody></table></div>
+</section>
+
+<section id="usuarios" class="section">
+<div class="panel">
+<h2>👥 Usuarios y roles</h2>
+<div class="notice"><b>Cómo crear un usuario:</b> 1) En Supabase abrí <b>Authentication → Users → Add user</b> y crea la cuenta con correo y contraseña. 2) Al crearla, el sistema genera automáticamente su perfil como <b>Asistente</b>. 3) Volvé acá y cambiale el rol a <b>Administrador</b> si corresponde.</div>
+<div class="toolbar"><button class="btn dark" onclick="renderUsuarios()">Actualizar usuarios</button></div>
+<table><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="tablaUsuarios"></tbody></table>
+<p class="footer-note">🔐 Las contraseñas las administra Supabase Authentication. No se guardan en la tabla de perfiles.</p>
+</div>
+</section>
+
+<section id="reportes" class="section">
+<div class="panel"><h2>Reportes</h2>
+<div class="toolbar"><label>Tipo de reporte <select id="tipoReporte" onchange="cambiarTipoReporte()"><option value="clientes">Clientes</option><option value="membresias">Membresías / Boletas</option><option value="asistencias">Asistencias</option><option value="productos">Productos / Stock</option><option value="ventas">Ventas</option><option value="compras">Compras</option></select></label><label>Desde <input type="date" id="repDesde"></label><label>Hasta <input type="date" id="repHasta"></label><button class="btn dark" onclick="generarReporte()">Generar reporte</button><button class="btn primary" onclick="exportarReporte()">📊 Exportar Excel (.xlsx)</button></div>
+<p class="footer-note" id="reporteDescripcion">Selecciona un tipo de reporte para consultar únicamente los datos de esa sección.</p>
+<div id="reporteResultado"></div></div>
+</section>
+</main>
+</div>
+
+<div class="modal" id="modal"><div class="modal-box"><div class="modal-head"><h2 id="modalTitle">Registrar</h2><button class="close" onclick="closeModal()">×</button></div><form id="modalForm"></form></div></div>
+
+<script>
+const KEY='gym_demo_v1';
+const SUPABASE_URL='https://beysmidycjhmnjwjexcy.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_QkaokJMlzhAFBxgTBpi5Ig_BjYitZhh';
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+let supabaseConnected=false;
+const membresiaTipos=['Gym Diario','Gym Diario con Caminadora','Gym Mensual','Gym Bimestral','Gym Trimestral','Gym Anual','MMA','Gym con MMA'];
+const pagos=['Efectivo','Yape','Depósito / Transferencia','Culqi'];
+const categorias=['Cafetín','Accesorios','Suplementos'];
+let db=JSON.parse(localStorage.getItem(KEY)||'{"clientes":[],"membresias":[],"productos":[],"ventas":[],"compras":[],"asistencias":[]}');
+let edit={type:null,id:null}, reporteData=[];
+let papeleraLocal=JSON.parse(localStorage.getItem('gym_papelera_v1')||'[]');
+let historialLocal=JSON.parse(localStorage.getItem('gym_historial_v1')||'[]');
+let cajasCerradasLocal=JSON.parse(localStorage.getItem('gym_cajas_cerradas_v1')||'[]');
+let usuarioActual=null;
+let modoCorreccionCaja=false;
+let fechaCorreccionCaja=null;
+
+const todayISO=()=>new Date().toISOString().slice(0,10);
+const todayEl=document.getElementById('today'); if(todayEl) todayEl.textContent=new Date().toLocaleDateString('es-PE',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+['fechaCaja','repDesde','repHasta'].forEach(id=>document.getElementById(id).value=todayISO());
+
+async function save(){
+  localStorage.setItem(KEY,JSON.stringify(db));
+  if(supabaseConnected) await syncAllToSupabase();
+  renderAll();
+}
+
+const tableMap={clientes:'clientes',membresias:'membresias',productos:'productos',ventas:'ventas',compras:'compras',asistencias:'asistencias'};
+function cleanForSupabase(type,row){
+  const x={...row};
+  if(type==='clientes') return {...x, codigo:Number(x.codigo)};
+  if(type==='membresias') return {...x,total:Number(x.total)};
+  if(type==='productos') return {...x,codigo:Number(x.codigo),precio:Number(x.precio),stock:Number(x.stock)};
+  if(type==='ventas') return {...x,cantidad:Number(x.cantidad),precio:Number(x.precio),total:Number(x.total)};
+  if(type==='compras') return {...x,monto:Number(x.monto)};
+  return x;
+}
+async function syncTable(type){
+  const table=tableMap[type];
+  const rows=db[type].map(r=>cleanForSupabase(type,r));
+  if(rows.length){ const {error}=await supabaseClient.from(table).upsert(rows,{onConflict:'id'}); if(error) throw error; }
+  const localIds=db[type].map(r=>r.id);
+  const {data:remote,error:readError}=await supabaseClient.from(table).select('id');
+  if(readError) throw readError;
+  const idsToDelete=(remote||[]).map(r=>r.id).filter(id=>!localIds.includes(id));
+  if(idsToDelete.length){ const {error}=await supabaseClient.from(table).delete().in('id',idsToDelete); if(error) throw error; }
+}
+async function syncAllToSupabase(){
+  try{ for(const type of Object.keys(tableMap)) await syncTable(type); }
+  catch(e){ console.error('Supabase sync:',e); supabaseConnected=false; }
+}
+async function loadFromSupabase(){
+  try{
+    const loaded={};
+    for(const type of Object.keys(tableMap)){
+      const {data,error}=await supabaseClient.from(tableMap[type]).select('*');
+      if(error) throw error;
+      loaded[type]=(data||[]).map(r=>({...r,id:r.id||crypto.randomUUID()}));
+    }
+    try{const {data:cajas,error:cajaError}=await supabaseClient.from('cajas_cierres').select('*').order('fecha',{ascending:false});if(!cajaError&&cajas)cajasCerradasLocal=cajas;localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));}catch(e){console.warn('Tabla cajas_cierres no disponible todavía.',e)}
+    const localHasData=Object.values(db).some(a=>Array.isArray(a)&&a.length>0);
+    const remoteHasData=Object.values(loaded).some(a=>Array.isArray(a)&&a.length>0);
+    if(remoteHasData || !localHasData){
+      db=loaded; localStorage.setItem(KEY,JSON.stringify(db));
+    }else{
+      supabaseConnected=true; await syncAllToSupabase();
+    }
+    supabaseConnected=true; renderAll();
+    console.log('Supabase conectado correctamente');
+  }catch(e){ supabaseConnected=false; console.warn('Supabase aún no está listo. Se usa localStorage hasta crear las tablas.',e); }
+}
+function money(n){return 'S/ '+Number(n||0).toFixed(2)}
+function ahoraISO(){return new Date().toISOString()}
+function fechaHora(row,campo='registrado_at'){const v=row?.[campo];return v?new Date(v).toLocaleString('es-PE',{dateStyle:'short',timeStyle:'medium'}):'—'}
+function horaExacta(row,campo='registrado_at'){const v=row?.[campo];return v?new Date(v).toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—'}
+function fechaDeRegistro(type,row){return type==='membresia'?row.fecha||row.inicio:type==='venta'||type==='compra'?row.fecha:type==='asistencia'?row.fecha:null}
+function cajaCerrada(fecha){return cajasCerradasLocal.find(x=>x.fecha===fecha&&x.estado==='cerrada')||null}
+function registroBloqueadoPorCaja(type,row){const fecha=fechaDeRegistro(type,row); return fecha && cajaCerrada(fecha) && !(usuarioActual?.rol==='administrador'&&modoCorreccionCaja)}
+function confirmarCorreccionCaja(fecha){if(usuarioActual?.rol!=='administrador')return false;const c=cajaCerrada(fecha);if(!c)return false;const motivo=prompt('La caja de '+fecha+' está cerrada. Ingresá el motivo de la corrección:');if(!motivo||!motivo.trim())return false;modoCorreccionCaja=true;registrarHistorial('caja','CORRECCION',c.id,'Caja cerrada puesta en modo corrección. Motivo: '+motivo.trim(),c,{...c,estado:'correccion',motivo_correccion:motivo.trim()});return true}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function nextCode(arr){return arr.length?Math.max(...arr.map(x=>Number(x.codigo)||0))+1:1}
+function activeMember(codigo){
+ const list=db.membresias.filter(m=>String(m.clienteCodigo)===String(codigo)).sort((a,b)=>b.fin.localeCompare(a.fin));
+ return list[0]||null;
+}
+function duracion(tipo){return {'Gym Diario':1,'Gym Diario con Caminadora':1,'Gym Mensual':30,'Gym Bimestral':60,'Gym Trimestral':90,'Gym Anual':365,'MMA':30,'Gym con MMA':30}[tipo]||1}
+function addDays(date,n){let d=new Date(date+'T12:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+function renderAll(){renderClientes();renderMembresias();renderProductos();renderVentas();renderCompras();renderAsistencia();renderDashboard();renderCaja();renderHistorial();renderPapelera();renderUsuarios();aplicarPermisos();}
+function emptyRow(cols,msg='Sin registros'){return `<tr><td colspan="${cols}">${msg}</td></tr>`}
+function actionBtns(type,id){let b=`<button class="btn muted" onclick="editRecord('${type}','${id}')">Editar</button>`; if(usuarioActual?.rol==='administrador') b+=` <button class="btn danger" onclick="deleteRecord('${type}','${id}')">Eliminar</button>`; return b}
+
+function renderClientes(){
+ const q=(document.getElementById('searchClientes')?.value||'').toLowerCase();
+ let a=db.clientes.filter(c=>[c.codigo,c.nombre,c.dni,c.celular].some(v=>String(v).toLowerCase().includes(q)));
+ document.getElementById('tablaClientes').innerHTML=a.length?a.map(c=>{let m=activeMember(c.codigo);return `<tr><td>${c.codigo}</td><td>${esc(c.nombre)}</td><td>${esc(c.dni)}</td><td>${esc(c.celular)}</td><td>${m?esc(m.tipo):'—'}</td><td>${esc(fechaHora(c,'registrado_at'))}</td><td>${esc(fechaHora(c,'actualizado_at'))}</td><td>${actionBtns('cliente',c.id)}</td></tr>`}).join(''):emptyRow(8);
+}
+function renderMembresias(){
+ const q=(document.getElementById('searchMembresias')?.value||'').toLowerCase();
+ let a=db.membresias.filter(m=>[m.boleta,m.clienteCodigo,m.clienteNombre,m.tipo].some(v=>String(v).toLowerCase().includes(q)));
+ document.getElementById('tablaMembresias').innerHTML=a.length?a.map(m=>`<tr><td>${esc(m.boleta)}</td><td>${esc(m.clienteNombre||'—')}</td><td>${esc(m.tipo)}</td><td>${m.inicio}</td><td>${m.fin}</td><td>${money(m.total)}</td><td>${esc(m.pago)}</td><td>${esc(m.numeroOperacion||'—')}</td><td>${esc(fechaHora(m,'registrado_at'))}</td><td>${actionBtns('membresia',m.id)}</td></tr>`).join(''):emptyRow(10);
+}
+function renderProductos(){
+ const q=(document.getElementById('searchProductos')?.value||'').toLowerCase();
+ let a=db.productos.filter(p=>[p.codigo,p.nombre,p.categoria].some(v=>String(v).toLowerCase().includes(q)));
+ document.getElementById('tablaProductos').innerHTML=a.length?a.map(p=>`<tr><td>${p.codigo}</td><td>${esc(p.nombre)}</td><td>${esc(p.categoria)}</td><td>${money(p.precio)}</td><td>${p.stock}</td><td>${esc(fechaHora(p,'registrado_at'))}</td><td>${esc(fechaHora(p,'actualizado_at'))}</td><td>${actionBtns('producto',p.id)}</td></tr>`).join(''):emptyRow(8);
+}
+function renderVentas(){
+ const q=(document.getElementById('searchVentas')?.value||'').toLowerCase();
+ let a=db.ventas.filter(v=>[v.fecha,v.producto,v.pago,v.numeroOperacion,v.tipoOperacion].some(x=>String(x||'').toLowerCase().includes(q)));
+ document.getElementById('tablaVentas').innerHTML=a.length?a.map(v=>`<tr><td>${v.fecha}</td><td>${esc(horaExacta(v,'registrado_at'))}</td><td>${esc(v.producto)}</td><td>${esc(v.categoria)}</td><td>${v.cantidad}</td><td>${money(v.total)}</td><td>${esc(v.pago)}</td><td>${esc(v.numeroOperacion||'—')}</td><td>${esc(v.tipoOperacion||'Venta')}</td><td>${actionBtns('venta',v.id)}</td></tr>`).join(''):emptyRow(10);
+}
+function renderCompras(){
+ const q=(document.getElementById('searchCompras')?.value||'').toLowerCase();
+ let a=db.compras.filter(c=>[c.fecha,c.tipo,c.descripcion,c.pago,c.numeroOperacion].some(x=>String(x||'').toLowerCase().includes(q)));
+ document.getElementById('tablaCompras').innerHTML=a.length?a.map(c=>`<tr><td>${c.fecha}</td><td>${esc(horaExacta(c,'registrado_at'))}</td><td>${esc(c.tipo)}</td><td>${esc(c.descripcion)}</td><td>${money(c.monto)}</td><td>${esc(c.pago)}</td><td>${esc(c.numeroOperacion||'—')}</td><td>${actionBtns('compra',c.id)}</td></tr>`).join(''):emptyRow(8);
+}
+function renderAsistencia(){
+ const q=(document.getElementById('searchAsistencia')?.value||'').toLowerCase();
+ let a=db.asistencias.filter(x=>[x.codigo,x.nombre,x.fecha].some(v=>String(v).toLowerCase().includes(q)));
+ document.getElementById('tablaAsistencia').innerHTML=a.length?a.map(x=>`<tr><td>${x.codigo}</td><td>${esc(x.nombre)}</td><td>${esc(x.membresia)}</td><td>${x.fecha}</td><td>${esc(horaExacta(x,'registrado_at'))}</td><td>${actionBtns('asistencia',x.id)}</td></tr>`).join(''):emptyRow(6);
+}
+function renderDashboard(){
+ document.getElementById('kClientes').textContent=db.clientes.length;
+ document.getElementById('kMembresias').textContent=db.membresias.filter(m=>m.fin>=todayISO()).length;
+ document.getElementById('kAsistencias').textContent=db.asistencias.filter(a=>a.fecha===todayISO()).length;
+ let prod=db.ventas.filter(v=>v.fecha===todayISO()&&(v.tipoOperacion||'Venta')==='Venta').reduce((s,v)=>s+Number(v.total),0);
+ let mem=db.membresias.filter(m=>m.fecha===todayISO()).reduce((s,v)=>s+Number(v.total),0);
+ let com=db.compras.filter(c=>c.fecha===todayISO()).reduce((s,v)=>s+Number(v.monto),0);
+ document.getElementById('kVentas').textContent=money(prod);document.getElementById('dMem').textContent=money(mem);document.getElementById('dProd').textContent=money(prod);document.getElementById('dCompras').textContent=money(com);document.getElementById('dCierre').textContent=money(mem+prod-com);
+ const hoy=new Date(todayISO()+'T12:00:00'); const porVencer=db.membresias.filter(m=>{const fin=new Date(m.fin+'T12:00:00'); const dias=Math.ceil((fin-hoy)/86400000); return dias>=0&&dias<=7;}).sort((a,b)=>a.fin.localeCompare(b.fin));
+ document.getElementById('alertasMembresias').innerHTML=porVencer.length?porVencer.map(m=>{const dias=Math.ceil((new Date(m.fin+'T12:00:00')-hoy)/86400000);return `<div class="alert-item"><b>${esc(m.clienteNombre||'Sin nombre')}</b> — ${esc(m.tipo)}<br><span>${dias===0?'Vence hoy':dias===1?'Vence mañana':'Vence en '+dias+' días'} (${m.fin})</span></div>`}).join(''):'Sin membresías por vencer en los próximos 7 días.';
+ const bajos=db.productos.filter(p=>Number(p.stock)<=5).sort((a,b)=>Number(a.stock)-Number(b.stock));
+ document.getElementById('alertasStock').innerHTML=bajos.length?bajos.map(p=>`<div class="alert-item"><b>${esc(p.nombre)}</b> — ${p.stock} unidades</div>`).join(''):'Todos los productos tienen más de 5 unidades.';
+}
+async function guardarCierreCaja(fecha){
+  if(!usuarioActual)return;
+  if(cajaCerrada(fecha))return alert('La caja de esta fecha ya está cerrada.');
+  const mem=db.membresias.filter(x=>x.fecha===fecha), ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'), com=db.compras.filter(x=>x.fecha===fecha);
+  const totalVentas=mem.reduce((s,x)=>s+Number(x.total||0),0)+ven.reduce((s,x)=>s+Number(x.total||0),0);
+  const totalCompras=com.reduce((s,x)=>s+Number(x.monto||0),0);
+  const cierre={id:crypto.randomUUID(),fecha,estado:'cerrada',cerrado_por:usuarioActual.id,cerrado_email:usuarioActual.email||'',cerrado_rol:usuarioActual.rol||'',cerrado_at:ahoraISO(),total_ventas:totalVentas,total_compras:totalCompras,total_cierre:totalVentas-totalCompras};
+  cajasCerradasLocal.unshift(cierre);localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));
+  await registrarHistorial('caja','CERRAR',cierre.id,'Caja cerrada para '+fecha,null,cierre);modoCorreccionCaja=false;renderCaja();alert('Caja del '+fecha+' cerrada correctamente.');
+}
+async function reabrirCajaParaCorreccion(fecha){
+  if(usuarioActual?.rol!=='administrador')return alert('Solo el administrador puede corregir una caja cerrada.');
+  const c=cajaCerrada(fecha);if(!c)return;
+  const motivo=prompt('Ingresá el motivo de la corrección de la caja del '+fecha+':');if(!motivo||!motivo.trim())return;
+  modoCorreccionCaja=true;
+  c.estado='correccion';c.motivo_correccion=motivo.trim();c.corregida_por=usuarioActual.id;c.corregida_email=usuarioActual.email||'';c.corregida_at=ahoraISO();
+  localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));
+  await registrarHistorial('caja','REABRIR_CORRECCION',c.id,'Caja reabierta temporalmente para corrección. Motivo: '+motivo.trim(),null,c);renderCaja();alert('Caja en modo corrección. Podés corregir ventas, compras o membresías de esa fecha. Al terminar, volvé a cerrar la caja.');
+}
+async function finalizarCorreccionCaja(fecha){
+  if(usuarioActual?.rol!=='administrador')return;
+  const c=cajasCerradasLocal.find(x=>x.fecha===fecha);if(!c)return;
+  const mem=db.membresias.filter(x=>x.fecha===fecha),ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'),com=db.compras.filter(x=>x.fecha===fecha);
+  const tv=mem.reduce((s,x)=>s+Number(x.total||0),0)+ven.reduce((s,x)=>s+Number(x.total||0),0),tg=com.reduce((s,x)=>s+Number(x.monto||0),0);
+  c.estado='cerrada';c.total_ventas=tv;c.total_compras=tg;c.total_cierre=tv-tg;c.cerrado_por=usuarioActual.id;c.cerrado_email=usuarioActual.email||'';c.cerrado_rol=usuarioActual.rol||'';c.cerrado_at=ahoraISO();c.recerrado_at=ahoraISO();
+  localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));await registrarHistorial('caja','RECERRAR',c.id,'Caja cerrada nuevamente después de una corrección',null,c);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('La caja volvió a quedar cerrada.');
+}
+function renderEstadoCaja(fecha){
+ const el=document.getElementById('estadoCaja');if(!el)return;const c=cajasCerradasLocal.find(x=>x.fecha===fecha);
+ if(!c){el.innerHTML='<span class="pill estado-abierta">🟡 CAJA ABIERTA</span><span class="caja-info">Todavía no se ha realizado el cierre de esta fecha.</span><button class="btn primary" onclick="guardarCierreCaja(\''+fecha+'\')">🔒 Cerrar caja del día</button>';return;}
+ const hora=new Date(c.cerrado_at).toLocaleString('es-PE');
+ if(c.estado==='correccion'){el.innerHTML='<span class="pill estado-correccion">🔵 EN CORRECCIÓN</span><span class="caja-info">Reabierta por '+esc(c.corregida_email||'administrador')+' el '+esc(new Date(c.corregida_at).toLocaleString('es-PE'))+'. Motivo: '+esc(c.motivo_correccion||'—')+'</span><button class="btn primary" onclick="finalizarCorreccionCaja(\''+fecha+'\')">🔒 Cerrar nuevamente</button>';return;}
+ el.innerHTML='<span class="pill estado-cerrada">🟢 CAJA CERRADA</span><span class="caja-info">Cerrada por <b>'+esc(c.cerrado_email||'—')+'</b> ('+esc(c.cerrado_rol||'—')+') el '+esc(hora)+' · Cierre: '+money(c.total_cierre)+'</span>'+(usuarioActual?.rol==='administrador'?'<button class="btn btn-warning" onclick="reabrirCajaParaCorreccion(\''+fecha+'\')">✏️ Corregir caja</button>':'');
+}
+async function persistirCierre(c){
+ localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));
+ if(supabaseConnected&&usuarioActual){try{const {error}=await supabaseClient.from('cajas_cierres').upsert(c,{onConflict:'fecha'});if(error)console.warn('No se pudo guardar cierre remoto:',error.message)}catch(e){console.warn(e)}}
+}
+async function guardarCierreCaja(fecha){
+ if(!usuarioActual)return;if(cajaCerrada(fecha))return alert('La caja de esta fecha ya está cerrada.');
+ const mem=db.membresias.filter(x=>x.fecha===fecha),ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'),com=db.compras.filter(x=>x.fecha===fecha);
+ const totalVentas=mem.reduce((s,x)=>s+Number(x.total||0),0)+ven.reduce((s,x)=>s+Number(x.total||0),0),totalCompras=com.reduce((s,x)=>s+Number(x.monto||0),0);
+ const c={id:crypto.randomUUID(),fecha,estado:'cerrada',cerrado_por:usuarioActual.id,cerrado_email:usuarioActual.email||'',cerrado_rol:usuarioActual.rol||'',cerrado_at:ahoraISO(),total_ventas:totalVentas,total_compras:totalCompras,total_cierre:totalVentas-totalCompras};
+ cajasCerradasLocal.unshift(c);await persistirCierre(c);await registrarHistorial('caja','CERRAR',c.id,'Caja cerrada para '+fecha,null,c);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('Caja del '+fecha+' cerrada correctamente.');
+}
+async function reabrirCajaParaCorreccion(fecha){
+ if(usuarioActual?.rol!=='administrador')return alert('Solo el administrador puede corregir una caja cerrada.');const c=cajaCerrada(fecha);if(!c)return;
+ const motivo=prompt('Ingresá el motivo de la corrección de la caja del '+fecha+':');if(!motivo||!motivo.trim())return;
+ modoCorreccionCaja=true;fechaCorreccionCaja=fecha;c.estado='correccion';c.motivo_correccion=motivo.trim();c.corregida_por=usuarioActual.id;c.corregida_email=usuarioActual.email||'';c.corregida_at=ahoraISO();await persistirCierre(c);await registrarHistorial('caja','REABRIR_CORRECCION',c.id,'Caja reabierta temporalmente para corrección. Motivo: '+motivo.trim(),null,c);renderCaja();alert('Caja en modo corrección. Corregí el registro y luego cerrá nuevamente la caja.');
+}
+async function finalizarCorreccionCaja(fecha){
+ if(usuarioActual?.rol!=='administrador')return;const c=cajasCerradasLocal.find(x=>x.fecha===fecha);if(!c)return;
+ const mem=db.membresias.filter(x=>x.fecha===fecha),ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'),com=db.compras.filter(x=>x.fecha===fecha);const tv=mem.reduce((s,x)=>s+Number(x.total||0),0)+ven.reduce((s,x)=>s+Number(x.total||0),0),tg=com.reduce((s,x)=>s+Number(x.monto||0),0);
+ c.estado='cerrada';c.total_ventas=tv;c.total_compras=tg;c.total_cierre=tv-tg;c.recerrado_at=ahoraISO();c.cerrado_por=usuarioActual.id;c.cerrado_email=usuarioActual.email||'';c.cerrado_rol=usuarioActual.rol||'';c.cerrado_at=ahoraISO();await persistirCierre(c);await registrarHistorial('caja','RECERRAR',c.id,'Caja cerrada nuevamente después de una corrección',null,c);modoCorreccionCaja=false;renderCaja();alert('La caja volvió a quedar cerrada.');
+}
+function renderEstadoCaja(fecha){
+ const el=document.getElementById('estadoCaja');if(!el)return;const c=cajasCerradasLocal.find(x=>x.fecha===fecha);
+ if(!c){el.innerHTML='<span class="pill estado-abierta">🟡 CAJA ABIERTA</span><span class="caja-info">Todavía no se ha realizado el cierre de esta fecha.</span><button class="btn primary" onclick="guardarCierreCaja(\''+fecha+'\')">🔒 Cerrar caja del día</button>';return;}
+ if(c.estado==='correccion'){el.innerHTML='<span class="pill estado-correccion">🔵 EN CORRECCIÓN</span><span class="caja-info">Reabierta por '+esc(c.corregida_email||'administrador')+' el '+esc(new Date(c.corregida_at).toLocaleString('es-PE'))+'. Motivo: '+esc(c.motivo_correccion||'—')+'</span><button class="btn primary" onclick="finalizarCorreccionCaja(\''+fecha+'\')">🔒 Cerrar nuevamente</button>';return;}
+ el.innerHTML='<span class="pill estado-cerrada">🟢 CAJA CERRADA</span><span class="caja-info">Cerrada por <b>'+esc(c.cerrado_email||'—')+'</b> ('+esc(c.cerrado_rol||'—')+') el '+esc(new Date(c.cerrado_at).toLocaleString('es-PE'))+' · Cierre: '+money(c.total_cierre)+'</span>'+(usuarioActual?.rol==='administrador'?'<button class="btn btn-warning" onclick="reabrirCajaParaCorreccion(\''+fecha+'\')">✏️ Corregir caja</button>':'');
+}
+function renderCaja(){
+  const fecha=document.getElementById('fechaCaja').value||todayISO();
+  renderEstadoCaja(fecha);
+  renderEstadoCaja(fecha);
+  const mem=db.membresias.filter(x=>x.fecha===fecha), ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'), consumos=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Consumo de Rubén'), com=db.compras.filter(x=>x.fecha===fecha);
+  const m=mem.reduce((s,x)=>s+Number(x.total||0),0), p=ven.reduce((s,x)=>s+Number(x.total||0),0), g=com.reduce((s,x)=>s+Number(x.monto||0),0);
+  document.getElementById('cMem').textContent=money(m); document.getElementById('cProd').textContent=money(p); document.getElementById('cVentas').textContent=money(m+p); document.getElementById('cCompras').textContent=money(g);
+  document.getElementById('cTotal').textContent=money(m+p); document.getElementById('cGasto').textContent=money(g); document.getElementById('cCierre').textContent=money(m+p-g);
+
+  const conceptos=[];
+  membresiaTipos.forEach(tipo=>{const a=mem.filter(x=>x.tipo===tipo); if(a.length) conceptos.push({seccion:'Membresías',concepto:tipo,cantidad:a.length,total:a.reduce((s,x)=>s+Number(x.total||0),0)});});
+  db.productos.forEach(prod=>{const a=ven.filter(x=>x.productoId===prod.id); if(a.length) conceptos.push({seccion:prod.categoria,concepto:prod.nombre,cantidad:a.reduce((s,x)=>s+Number(x.cantidad||0),0),total:a.reduce((s,x)=>s+Number(x.total||0),0)});});
+  document.getElementById('tablaCantidadesCaja').innerHTML=(conceptos.map(x=>`<tr><td>${esc(x.seccion)}</td><td>${esc(x.concepto)}</td><td>${x.cantidad}</td><td>${money(x.total)}</td></tr>`).join('')||emptyRow(4))+`<tr><th colspan="2">TOTAL</th><th>${conceptos.reduce((s,x)=>s+x.cantidad,0)}</th><th>${money(conceptos.reduce((s,x)=>s+x.total,0))}</th></tr>`;
+
+  function fillBreakdown(id, arr, label){
+    const names=[...new Set(arr.map(label))];
+    const html=names.map(name=>{const rows=arr.filter(x=>label(x)===name); const vals=pagos.map(pg=>rows.filter(x=>x.pago===pg).reduce((s,x)=>s+Number(x.total||0),0)); return `<tr><td>${esc(name)}</td>${vals.map(v=>`<td>${money(v)}</td>`).join('')}<td><b>${money(vals.reduce((s,v)=>s+v,0))}</b></td></tr>`}).join('');
+    const totals=pagos.map(pg=>arr.filter(x=>x.pago===pg).reduce((s,x)=>s+Number(x.total||0),0));
+    document.getElementById(id).innerHTML=(html||emptyRow(6))+`<tr><th>TOTAL</th>${totals.map(v=>`<th>${money(v)}</th>`).join('')}<th>${money(totals.reduce((s,v)=>s+v,0))}</th></tr>`;
+  }
+  fillBreakdown('tablaCajaMembresias',mem,x=>x.tipo);
+  fillBreakdown('tablaCajaCafetín',ven.filter(x=>x.categoria==='Cafetín'),x=>x.producto);
+  fillBreakdown('tablaCajaAccesorios',ven.filter(x=>x.categoria==='Accesorios'),x=>x.producto);
+  fillBreakdown('tablaCajaSuplementos',ven.filter(x=>x.categoria==='Suplementos'),x=>x.producto);
+
+  const pt=pagos.map(pg=>({pago:pg,total:mem.filter(x=>x.pago===pg).reduce((s,x)=>s+Number(x.total||0),0)+ven.filter(x=>x.pago===pg).reduce((s,x)=>s+Number(x.total||0),0)}));
+  document.getElementById('tablaPagos').innerHTML=pt.map(x=>`<tr><td>${esc(x.pago)}</td><td>${money(x.total)}</td></tr>`).join('')+`<tr><th>TOTAL</th><th>${money(pt.reduce((s,x)=>s+x.total,0))}</th></tr>`;
+  document.getElementById('tablaComprasCaja').innerHTML=(com.map(x=>`<tr><td>${esc(x.tipo)}</td><td>${esc(x.descripcion)}</td><td>${money(x.monto)}</td><td>${esc(x.pago)}</td><td>${esc(x.numeroOperacion||'—')}</td></tr>`).join('')||emptyRow(5))+`<tr><th colspan="2">TOTAL COMPRAS</th><th>${money(g)}</th><th colspan="2"></th></tr>`;
+  window.cajaExcelData={fecha,mem,ven,consumos,com,conceptos,paymentTotals:pt,m,g,p,cierre:m+p-g};
+}
+
+function exportarCajaExcel(){
+  renderCaja();
+  if(typeof XLSX==='undefined'){alert('No se pudo cargar Excel. Abrí el demo con conexión a Internet y volvé a intentarlo.');return;}
+  const d=window.cajaExcelData, wb=XLSX.utils.book_new();
+  const resumen=[['CIERRE DE CAJA',d.fecha],[],['SECCIÓN','CONCEPTO','CANTIDAD','TOTAL INGRESADO'],...d.conceptos.map(x=>[x.seccion,x.concepto,x.cantidad,Number(x.total)]),['TOTAL','',d.conceptos.reduce((s,x)=>s+x.cantidad,0),Number(d.conceptos.reduce((s,x)=>s+x.total,0))],[],['MEDIO DE PAGO','TOTAL'],...d.paymentTotals.map(x=>[x.pago,Number(x.total)]),['TOTAL',Number(d.paymentTotals.reduce((s,x)=>s+x.total,0))],[],['CIERRE FINAL','MONTO'],['Total obtenido de ventas',Number(d.m)],['Compras',Number(d.g)],['Total cierre',Number(d.cierre)]];
+  const ws=XLSX.utils.aoa_to_sheet(resumen); ws['!cols']=[{wch:24},{wch:34},{wch:14},{wch:20}]; XLSX.utils.book_append_sheet(wb,ws,'Resumen Caja');
+  function addBreakdown(name,arr,label){const rows=[[name,'Efectivo','Yape','Depósito','Culqi','Total']]; [...new Set(arr.map(label))].forEach(n=>{const r=arr.filter(x=>label(x)===n), vals=pagos.map(pg=>r.filter(x=>x.pago===pg).reduce((s,x)=>s+Number(x.total||0),0)); rows.push([n,...vals,vals.reduce((s,v)=>s+v,0)]);}); const totals=pagos.map(pg=>arr.filter(x=>x.pago===pg).reduce((s,x)=>s+Number(x.total||0),0)); rows.push(['TOTAL',...totals,totals.reduce((s,v)=>s+v,0)]); const w=XLSX.utils.aoa_to_sheet(rows); w['!cols']=[{wch:34},{wch:15},{wch:15},{wch:17},{wch:15},{wch:17}]; XLSX.utils.book_append_sheet(wb,w,name.slice(0,31));}
+  addBreakdown('Membresías',d.mem,x=>x.tipo); addBreakdown('Cafetín',d.ven.filter(x=>x.categoria==='Cafetín'),x=>x.producto); addBreakdown('Accesorios',d.ven.filter(x=>x.categoria==='Accesorios'),x=>x.producto); addBreakdown('Suplementos',d.ven.filter(x=>x.categoria==='Suplementos'),x=>x.producto);
+  const cr=[['Fecha','Tipo','Descripción','Monto','Medio de pago','N.º de operación'],...d.com.map(x=>[x.fecha,x.tipo,x.descripcion,Number(x.monto),x.pago,x.numeroOperacion||'']),['','','TOTAL',Number(d.g),'','']]; const wc=XLSX.utils.aoa_to_sheet(cr); wc['!cols']=[{wch:14},{wch:22},{wch:34},{wch:15},{wch:24},{wch:22}]; XLSX.utils.book_append_sheet(wb,wc,'Compras');
+  const rub=[['Fecha','Producto','Categoría','Cantidad','Precio unitario','Total','Tipo de operación'],...d.consumos.map(x=>[x.fecha,x.producto,x.categoria,Number(x.cantidad),Number(x.precio),Number(x.total),x.tipoOperacion||'Consumo de Rubén'])]; const wr=XLSX.utils.aoa_to_sheet(rub); wr['!cols']=[{wch:14},{wch:30},{wch:18},{wch:12},{wch:18},{wch:15},{wch:24}]; XLSX.utils.book_append_sheet(wb,wr,'Consumos Rubén');
+  XLSX.writeFile(wb,`cierre_caja_${d.fecha}.xlsx`);
+}
+function openModal(type,id=null){
+ edit={type,id};const f=document.getElementById('modalForm');let title='',html='';
+ const old=id?db[type==='cliente'?'clientes':type==='membresia'?'membresias':type==='producto'?'productos':type==='venta'?'ventas':type==='compra'?'compras':'asistencias'].find(x=>x.id===id):null;
+ if(type==='cliente'){title=id?'Editar cliente':'Nuevo cliente';let c=old||{};html=`<div class="grid">
+ <div class="form-group"><label>Código (automático, modificable)</label><input name="codigo" value="${c.codigo??nextCode(db.clientes)}" required></div>
+ <div class="form-group"><label>Nombre completo</label><input name="nombre" value="${esc(c.nombre)}" required></div>
+ <div class="form-group"><label>Fecha de nacimiento</label><input type="date" name="nacimiento" value="${c.nacimiento||''}"></div>
+ <div class="form-group"><label>Sexo</label><select name="sexo"><option>Masculino</option><option>Femenino</option><option>Otro</option></select></div>
+ <div class="form-group"><label>Apoderado</label><input name="apoderado" value="${esc(c.apoderado)}"></div>
+ <div class="form-group"><label>N.º de emergencia</label><input name="emergencia" value="${esc(c.emergencia)}"></div>
+ <div class="form-group"><label>Dirección</label><input name="direccion" value="${esc(c.direccion)}"></div>
+ <div class="form-group"><label>Peso</label><input name="peso" value="${c.peso||''}"></div>
+ <div class="form-group"><label>Talla</label><input name="talla" value="${c.talla||''}"></div>
+ <div class="form-group"><label>DNI</label><input name="dni" value="${esc(c.dni)}"></div>
+ <div class="form-group"><label>Celular</label><input name="celular" value="${esc(c.celular)}"></div>
+ <div class="form-group"><label>Correo</label><input type="email" name="correo" value="${esc(c.correo)}"></div></div>
+ <div style="margin-top:15px;text-align:right"><button class="btn primary">Guardar</button></div>`}
+ if(type==='membresia'){title=id?'Editar membresía':'Registrar membresía';let m=old||{};html=`<div class="grid">
+ <div class="form-group"><label>Código de boleta (manual)</label><input name="boleta" value="${esc(m.boleta)}" required></div>
+ <div class="form-group"><label>Código de cliente (vacío para diario)</label><input name="clienteCodigo" value="${esc(m.clienteCodigo)}" oninput="previewCliente()"></div>
+ <div class="form-group"><label>Nombre de persona</label><input name="clienteNombre" value="${esc(m.clienteNombre)}" placeholder="Se carga con código o se escribe manualmente"></div>
+ <div class="form-group"><label>Tipo de membresía</label><select name="tipo" onchange="calcFin();toggleNombreMembresia()">${membresiaTipos.map(x=>`<option ${x===m.tipo?'selected':''}>${x}</option>`).join('')}</select></div>
+ <div class="form-group"><label>Fecha de inicio</label><input type="date" name="inicio" value="${m.inicio||todayISO()}" onchange="calcFin()"></div>
+ <div class="form-group"><label>Fecha de fin automática</label><input type="date" name="fin" value="${m.fin||''}" readonly></div>
+ <div class="form-group"><label>Total</label><input type="number" step="0.01" name="total" value="${m.total||''}" required></div>
+ <div class="form-group"><label>Método de pago</label><select name="pago" onchange="toggleOperacionMembresia()">${pagos.map(x=>`<option ${x===m.pago?'selected':''}>${x}</option>`).join('')}</select></div>
+  <div class="form-group" id="grupoOperacionMembresia"><label>N.º de operación</label><input name="numeroOperacion" value="${esc(m.numeroOperacion)}" placeholder="Ingrese el número de operación"></div></div>
+ <p class="footer-note">Gym Diario y Gym Diario con Caminadora no requieren código de cliente.</p>
+ <div style="text-align:right"><button class="btn primary">Guardar</button></div>`}
+ if(type==='producto'){title=id?'Editar producto':'Nuevo producto';let p=old||{};html=`<div class="grid"><div class="form-group"><label>Código automático, modificable</label><input name="codigo" value="${p.codigo??nextCode(db.productos)}" required></div><div class="form-group"><label>Nombre</label><input name="nombre" value="${esc(p.nombre)}" required></div><div class="form-group"><label>Categoría</label><select name="categoria">${categorias.map(x=>`<option ${x===p.categoria?'selected':''}>${x}</option>`).join('')}</select></div><div class="form-group"><label>Precio</label><input type="number" step="0.01" name="precio" value="${p.precio||''}" required></div><div class="form-group"><label>Stock</label><input type="number" name="stock" value="${p.stock??0}" required></div></div><div style="margin-top:15px;text-align:right"><button class="btn primary">Guardar</button></div>`}
+ if(type==='venta'){title=id?'Editar operación':'Registrar operación';let v=old||{};const tipoOp=v.tipoOperacion||'Venta';html=`<div class="grid"><div class="form-group"><label>Tipo de operación</label><select name="tipoOperacion" onchange="toggleOperacionVenta()"><option ${tipoOp==='Venta'?'selected':''}>Venta</option><option ${tipoOp==='Consumo de Rubén'?'selected':''}>Consumo de Rubén</option></select></div><div class="form-group"><label>Fecha</label><input type="date" name="fecha" value="${v.fecha||todayISO()}" required></div><div class="form-group"><label>Producto</label><select name="productoId" onchange="previewProducto()">${db.productos.map(p=>`<option value="${p.id}" ${p.id===v.productoId?'selected':''}>${p.codigo} - ${esc(p.nombre)}</option>`).join('')}</select></div><div class="form-group"><label>Precio unitario</label><input name="precio" value="${v.precio||''}" readonly></div><div class="form-group"><label>Cantidad</label><input type="number" min="1" name="cantidad" value="${v.cantidad||1}" oninput="calcVenta()" required></div><div class="form-group"><label>Total valorizado</label><input name="total" value="${v.total||''}" readonly></div><div class="form-group" id="grupoPagoVenta"><label>Método de pago</label><select name="pago" onchange="toggleOperacionVenta()">${pagos.map(x=>`<option ${x===v.pago?'selected':''}>${x}</option>`).join('')}</select></div><div class="form-group" id="grupoOperacionVenta"><label>N.º de operación</label><input name="numeroOperacion" value="${esc(v.numeroOperacion)}" placeholder="Ingrese el número de operación"></div></div><p class="footer-note">Consumo de Rubén descuenta stock, pero no genera ingreso ni afecta Caja.</p><div style="text-align:right"><button class="btn primary">Guardar</button></div>`}
+ if(type==='compra'){title=id?'Editar compra':'Registrar compra';let c=old||{};html=`<div class="grid"><div class="form-group"><label>Fecha</label><input type="date" name="fecha" value="${c.fecha||todayISO()}"></div><div class="form-group"><label>Tipo de compra</label><input name="tipo" value="${esc(c.tipo)}" placeholder="Ej. insumos"></div><div class="form-group"><label>Descripción</label><input name="descripcion" value="${esc(c.descripcion)}"></div><div class="form-group"><label>Monto</label><input type="number" step="0.01" name="monto" value="${c.monto||''}" required></div><div class="form-group"><label>Método de pago</label><select name="pago" onchange="toggleOperacionCompra()">${pagos.map(x=>`<option ${x===c.pago?'selected':''}>${x}</option>`).join('')}</select></div><div class="form-group" id="grupoOperacionCompra"><label>N.º de operación</label><input name="numeroOperacion" value="${esc(c.numeroOperacion)}" placeholder="Ingrese el número de operación"></div></div><div style="text-align:right"><button class="btn primary">Guardar</button></div>`}
+ f.innerHTML=html;document.getElementById('modalTitle').textContent=title;document.getElementById('modal').classList.add('open');
+ if(type==='membresia'){calcFin();previewCliente();toggleNombreMembresia();toggleOperacionMembresia()} if(type==='venta'){previewProducto();toggleOperacionVenta()} if(type==='compra'){toggleOperacionCompra()}
+ f.onsubmit=e=>{e.preventDefault();submitModal(type,id)}
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');edit={type:null,id:null}}
+function formObj(){return Object.fromEntries(new FormData(document.getElementById('modalForm')).entries())}
+function clonar(o){return o==null?null:JSON.parse(JSON.stringify(o))}
+function etiquetaCampo(k){const m={codigo:'Código',nombre:'Nombre',nombreCompleto:'Nombre',dni:'DNI',celular:'Celular',correo:'Correo',direccion:'Dirección',sexo:'Sexo',apoderado:'Apoderado',emergencia:'N.º emergencia',peso:'Peso',talla:'Talla',clienteCodigo:'Código cliente',clienteNombre:'Cliente',boleta:'Boleta',tipo:'Membresía',inicio:'Fecha inicio',fin:'Fecha fin',total:'Total',pago:'Medio de pago',numeroOperacion:'N.º operación',precio:'Precio',stock:'Stock',categoria:'Categoría',producto:'Producto',productoId:'Producto',cantidad:'Cantidad',tipoOperacion:'Tipo de operación',fecha:'Fecha',monto:'Monto',descripcion:'Descripción'};return m[k]||k}
+function valorLegible(v){if(v===null||v===undefined||v==='')return '—'; if(typeof v==='object')return JSON.stringify(v); return String(v)}
+function nombreRegistro(type,x){if(!x)return '—'; if(type==='cliente')return `${x.nombre||'Cliente'} #${x.codigo??'—'}`; if(type==='membresia')return `${x.clienteNombre||'Sin nombre'} — ${x.tipo||'Membresía'}${x.boleta?' — Boleta '+x.boleta:''}`; if(type==='producto')return `${x.nombre||'Producto'} #${x.codigo??'—'}`; if(type==='venta')return `${x.producto||'Venta'} — ${x.cantidad??0} unid.`; if(type==='compra')return `${x.descripcion||'Compra'}`; if(type==='asistencia')return `${x.nombre||'Cliente'} #${x.codigo??'—'}`; return 'Registro'}
+function campoVisibleAuditoria(k,antes,despues){
+ if(['id','usuario_id','created_at','registrado_at','actualizado_at'].includes(k))return false;
+ // En ventas, productoId es un identificador interno. El usuario debe ver el nombre del producto.
+ if(k==='productoId' && (antes?.producto || despues?.producto))return false;
+ return true;
+}
+function valorCambio(campo,v,antes,despues){
+ if((campo==='productoId') && v){
+   const p=db.productos.find(x=>x.id===v);
+   if(p)return p.nombre;
+ }
+ if(campo==='clienteCodigo' && v){
+   const c=db.clientes.find(x=>String(x.codigo)===String(v));
+   if(c)return `${c.nombre} (#${v})`;
+ }
+ return valorLegible(v);
+}
+function diferenciaLista(antes,despues){const keys=[...new Set([...Object.keys(antes||{}),...Object.keys(despues||{})])].filter(k=>campoVisibleAuditoria(k,antes,despues));if(!antes)return keys.map(k=>({campo:k,antes:null,despues:despues?.[k]}));return keys.filter(k=>JSON.stringify(antes?.[k])!==JSON.stringify(despues?.[k])).map(k=>({campo:k,antes:antes?.[k],despues:despues?.[k]}))}
+function diferencias(antes,despues){const dif=diferenciaLista(antes,despues);if(!dif.length)return 'Sin cambios de campos';return dif.map(x=>`${etiquetaCampo(x.campo)}: ${valorCambio(x.campo,x.antes,antes,despues)} → ${valorCambio(x.campo,x.despues,antes,despues)}`).join(' | ')}
+function accionClase(a){return a==='CREAR'?'audit-create':a==='EDITAR'?'audit-edit':a.includes('ELIMINAR')?'audit-delete':a==='RESTAURAR'?'audit-restore':a.includes('CERRAR')?'audit-create':a.includes('CORRECCION')?'audit-edit':''}
+function historialCambiosHtml(antes,despues){const dif=diferenciaLista(antes,despues);if(!dif.length)return '<span class="audit-empty">Sin cambios de campos</span>';return `<div class="audit-change">${dif.slice(0,5).map(x=>`<div class="change-row"><div class="change-label">${esc(etiquetaCampo(x.campo))}</div><div class="change-values"><span class="change-old">${esc(valorCambio(x.campo,x.antes,antes,despues))}</span><span class="change-arrow">→</span><span class="change-new">${esc(valorCambio(x.campo,x.despues,antes,despues))}</span></div></div>`).join('')}${dif.length>5?`<div class="audit-empty">+ ${dif.length-5} cambios más</div>`:''}</div>`}
+function verDetalleHistorial(id){const x=historialLocal.find(z=>z.id===id);if(!x)return;const reg=nombreRegistro(x.modulo,x.datos_nuevos||x.datos_anteriores);const dif=diferenciaLista(x.datos_anteriores,x.datos_nuevos);document.getElementById('historialDetalleContenido').innerHTML=`<div class="audit-detail-grid"><div class="audit-detail-card"><small>Fecha</small><strong>${esc(new Date(x.created_at).toLocaleString('es-PE'))}</strong></div><div class="audit-detail-card"><small>Usuario</small><strong>${esc(x.usuario_email||'—')}</strong></div><div class="audit-detail-card"><small>Rol</small><strong>${esc(x.rol||'—')}</strong></div><div class="audit-detail-card"><small>Módulo</small><strong>${esc(x.modulo)}</strong></div><div class="audit-detail-card"><small>Acción</small><strong>${esc(x.accion)}</strong></div><div class="audit-detail-card" style="grid-column:1/-1"><small>Registro afectado</small><strong>${esc(reg)}</strong></div></div><h3 style="margin:18px 0 10px">Cambios realizados</h3><div class="audit-full-changes">${historialCambiosHtml(x.datos_anteriores,x.datos_nuevos)}</div>`;document.getElementById('historialDetalleModal').classList.add('open')}
+function cerrarDetalleHistorial(){document.getElementById('historialDetalleModal').classList.remove('open')}
+function submitModal(type,id){
+ let d=formObj(), arr=type==='cliente'?db.clientes:type==='membresia'?db.membresias:type==='producto'?db.productos:type==='venta'?db.ventas:db.compras;
+ const anterior=id?clonar(arr.find(x=>x.id===id)):null;
+ const fechaOperacion=d.fecha||d.inicio||anterior?.fecha||anterior?.inicio||null;
+ if(fechaOperacion&&cajaCerrada(fechaOperacion)&&!(usuarioActual?.rol==='administrador'&&modoCorreccionCaja&&fechaCorreccionCaja===fechaOperacion)){
+   alert(bloqueoCajaMensaje(fechaOperacion)); return;
+ }
+ d.registrado_at=anterior?.registrado_at||ahoraISO();
+ d.actualizado_at=ahoraISO();
+ if(type==='cliente'){d.codigo=Number(d.codigo); if(!id)d.id=crypto.randomUUID();else d.id=id; arr[id?arr.findIndex(x=>x.id===id):arr.length]=d}
+ if(type==='membresia'){d.total=Number(d.total);d.id=id||crypto.randomUUID();d.fecha=d.inicio; if(!id)arr.push(d);else arr[arr.findIndex(x=>x.id===id)]=d; let c=db.clientes.find(x=>String(x.codigo)===String(d.clienteCodigo));if(c){c.membresia=d.tipo;c.inicio=d.inicio;c.fin=d.fin}}
+ if(type==='producto'){d.codigo=Number(d.codigo);d.precio=Number(d.precio);d.stock=Number(d.stock);d.id=id||crypto.randomUUID();if(!id)arr.push(d);else arr[arr.findIndex(x=>x.id===id)]=d}
+ if(type==='venta'){let p=db.productos.find(x=>x.id===d.productoId);if(!p)return alert('No hay productos registrados.');d.tipoOperacion=d.tipoOperacion||'Venta';d.cantidad=Number(d.cantidad);d.precio=Number(d.precio);d.total=Number(d.total);d.producto=p.nombre;d.categoria=p.categoria;if(d.tipoOperacion==='Consumo de Rubén'){d.pago='No aplica';d.numeroOperacion='';}else if(['Yape','Depósito / Transferencia','Culqi'].includes(d.pago)){if(!String(d.numeroOperacion||'').trim())return alert('Ingresá el número de operación.');}else d.numeroOperacion='';d.id=id||crypto.randomUUID();if(!id){if(d.cantidad>p.stock)return alert('Stock insuficiente.');p.stock-=d.cantidad;arr.push(d)}else{let old=db.ventas.find(x=>x.id===id);if(old&&old.productoId===d.productoId)p.stock+=Number(old.cantidad)-d.cantidad;else if(d.cantidad>p.stock)return alert('Stock insuficiente.');arr[arr.findIndex(x=>x.id===id)]=d}}
+ if(type==='compra'){d.monto=Number(d.monto);if(['Yape','Depósito / Transferencia','Culqi'].includes(d.pago)){if(!String(d.numeroOperacion||'').trim())return alert('Ingresá el número de operación.');}else d.numeroOperacion='';d.id=id||crypto.randomUUID();if(!id)arr.push(d);else arr[arr.findIndex(x=>x.id===id)]=d}
+ const despues=clonar(arr.find(x=>x.id===d.id)||d); const accion=id?'EDITAR':'CREAR'; const detalle=accion==='EDITAR'?`Modificó ${nombreRegistro(type,despues)}. Cambios: ${diferencias(anterior,despues)}`:`Creó ${nombreRegistro(type,despues)}. Datos: ${diferencias(null,despues)}`;
+ registrarHistorial(type,accion,id||d.id,detalle,anterior,despues); save();closeModal()
+}
+function previewCliente(){
+  let f=document.getElementById('modalForm'); if(!f||!f.elements.clienteCodigo)return;
+  let code=f.elements.clienteCodigo.value.trim();
+  let c=db.clientes.find(x=>String(x.codigo)===String(code));
+  if(f.elements.clienteNombre && code && c){f.elements.clienteNombre.value=c.nombre;f.elements.clienteNombre.readOnly=true;}
+  else if(f.elements.clienteNombre){f.elements.clienteNombre.readOnly=false;}
+}
+function toggleNombreMembresia(){
+  let f=document.getElementById('modalForm'); if(!f||!f.elements.tipo)return;
+  let code=(f.elements.clienteCodigo?.value||'').trim();
+  let c=code?db.clientes.find(x=>String(x.codigo)===String(code)):null;
+  let nombre=f.elements.clienteNombre; if(!nombre)return;
+  if(c){nombre.value=c.nombre;nombre.readOnly=true;} else {nombre.readOnly=false;}
+}
+function toggleOperacionMembresia(){
+  const f=document.getElementById('modalForm'); if(!f||!f.elements.pago||!f.elements.numeroOperacion)return;
+  const requiere=['Yape','Depósito / Transferencia','Culqi'].includes(f.elements.pago.value);
+  const grupo=document.getElementById('grupoOperacionMembresia');
+  f.elements.numeroOperacion.required=requiere;
+  f.elements.numeroOperacion.placeholder=requiere?'Ingrese el número de operación':'No aplica para efectivo';
+  if(grupo) grupo.style.display=requiere?'block':'none';
+  if(!requiere) f.elements.numeroOperacion.value='';
+}
+function toggleOperacionVenta(){const f=document.getElementById('modalForm');if(!f||!f.elements.pago||!f.elements.numeroOperacion)return;const interno=f.elements.tipoOperacion&&f.elements.tipoOperacion.value==='Consumo de Rubén';const requiere=!interno&&['Yape','Depósito / Transferencia','Culqi'].includes(f.elements.pago.value);const gp=document.getElementById('grupoPagoVenta'),go=document.getElementById('grupoOperacionVenta');if(gp)gp.style.display=interno?'none':'block';f.elements.pago.disabled=interno;if(interno)f.elements.pago.value='Efectivo';f.elements.numeroOperacion.required=requiere;f.elements.numeroOperacion.placeholder=requiere?'Ingrese el número de operación':'No aplica para efectivo';if(go)go.style.display=requiere?'block':'none';if(!requiere)f.elements.numeroOperacion.value=''}
+function toggleOperacionCompra(){const f=document.getElementById('modalForm');if(!f||!f.elements.pago||!f.elements.numeroOperacion)return;const requiere=['Yape','Depósito / Transferencia','Culqi'].includes(f.elements.pago.value);const go=document.getElementById('grupoOperacionCompra');f.elements.numeroOperacion.required=requiere;f.elements.numeroOperacion.placeholder=requiere?'Ingrese el número de operación':'No aplica para efectivo';if(go)go.style.display=requiere?'block':'none';if(!requiere)f.elements.numeroOperacion.value=''}
+function calcFin(){let f=document.getElementById('modalForm');if(!f||!f.elements.tipo)return;let ini=f.elements.inicio.value||todayISO();f.elements.fin.value=addDays(ini,duracion(f.elements.tipo.value)-1)}
+function previewProducto(){let f=document.getElementById('modalForm');if(!f||!f.elements.productoId)return;let p=db.productos.find(x=>x.id===f.elements.productoId.value);f.elements.precio.value=p?p.precio:'';calcVenta()}
+function calcVenta(){let f=document.getElementById('modalForm');if(!f||!f.elements.cantidad)return;f.elements.total.value=(Number(f.elements.precio.value||0)*Number(f.elements.cantidad.value||0)).toFixed(2)}
+function buscarClienteAsistencia(){let code=document.getElementById('codigoAsistencia').value,c=db.clientes.find(x=>String(x.codigo)===String(code));let box=document.getElementById('infoAsistencia');if(!c){box.textContent='Cliente no encontrado.';return}let m=activeMember(c.codigo);box.innerHTML=`<b>${esc(c.nombre)}</b><br>Código: ${c.codigo}<br>Membresía: ${m?esc(m.tipo):'Sin membresía'}<br>Vigencia: ${m?m.inicio+' al '+m.fin:'—'}<br><br>${m&&m.fin>=todayISO()?'<span class="pill">MEMBRESÍA VIGENTE</span>':'<span class="pill expired">MEMBRESÍA VENCIDA / SIN MEMBRESÍA</span>'}`}
+function registrarAsistencia(){let code=document.getElementById('codigoAsistencia').value,c=db.clientes.find(x=>String(x.codigo)===String(code));if(!c)return alert('Ingresá un código válido.');let m=activeMember(c.codigo);if(!m||m.fin<todayISO())return alert('La membresía no está vigente.');if(db.asistencias.some(a=>String(a.codigo)===String(code)&&a.fecha===todayISO()))return alert('La asistencia de hoy ya está registrada.');const asistencia={id:crypto.randomUUID(),codigo:c.codigo,nombre:c.nombre,membresia:m.tipo,fecha:todayISO(),registrado_at:ahoraISO()};db.asistencias.push(asistencia);registrarHistorial('asistencia','CREAR',asistencia.id,'Asistencia registrada',null,asistencia);save();alert('Asistencia registrada.')}
+async function registrarHistorial(modulo,accion,registroId,detalle='',antes=null,despues=null){
+ const item={id:crypto.randomUUID(),usuario_id:usuarioActual?.id||null,usuario_email:usuarioActual?.email||'',rol:usuarioActual?.rol||'',modulo,accion,registro_id:String(registroId||''),detalle,datos_anteriores:antes,datos_nuevos:despues,created_at:new Date().toISOString()};
+ historialLocal.unshift(item); localStorage.setItem('gym_historial_v1',JSON.stringify(historialLocal));
+ if(supabaseConnected&&usuarioActual){try{await supabaseClient.from('historial_movimientos').insert(item)}catch(e){console.warn(e)}}
+}
+async function moverAPapelera(type,id,antes){
+ const item={id:crypto.randomUUID(),usuario_id:usuarioActual?.id||null,usuario_email:usuarioActual?.email||'',rol:usuarioActual?.rol||'',modulo:type,registro_id:String(id),datos:antes,motivo:'Eliminado por usuario',eliminado_at:new Date().toISOString(),vence_at:new Date(Date.now()+30*86400000).toISOString()};
+ papeleraLocal.unshift(item); localStorage.setItem('gym_papelera_v1',JSON.stringify(papeleraLocal));
+ if(supabaseConnected&&usuarioActual){try{await supabaseClient.from('papelera').insert(item)}catch(e){console.warn(e)}}
+}
+async function deleteRecord(type,id){if(usuarioActual?.rol!=='administrador')return alert('Solo los administradores pueden eliminar registros.');if(!confirm('¿Enviar este registro a la papelera por 30 días?'))return;let key=type==='cliente'?'clientes':type==='membresia'?'membresias':type==='producto'?'productos':type==='venta'?'ventas':type==='compra'?'compras':'asistencias';const antes=db[key].find(x=>x.id===id);if(!antes)return;if(registroBloqueadoPorCaja(type,antes)){if(!confirmarCorreccionCaja(fechaDeRegistro(type,antes)))return;}
+  // Al eliminar una venta/consumo, devolvemos automáticamente las unidades al stock.
+  if(type==='venta'){const producto=db.productos.find(p=>p.id===antes.productoId);if(producto){producto.stock=Number(producto.stock||0)+Number(antes.cantidad||0);}}
+  await moverAPapelera(type,id,antes);db[key]=db[key].filter(x=>x.id!==id);await registrarHistorial(type,'ELIMINAR',id,type==='venta'?'Venta eliminada y stock restaurado.':'Registro enviado a papelera por 30 días',antes,null);await save()}
+function editRecord(type,id){openModal(type,id)}
+function aplicarPermisos(){
+ const admin=usuarioActual?.rol==='administrador'; document.getElementById('navPapelera')?.classList.toggle('hidden',!admin); document.getElementById('navUsuarios')?.classList.toggle('hidden',!admin);
+}
+function renderHistorial(){const q=(document.getElementById('searchHistorial')?.value||'').toLowerCase();const a=historialLocal.filter(x=>[x.usuario_email,x.rol,x.modulo,x.accion,x.detalle,x.registro_id,nombreRegistro(x.modulo,x.datos_nuevos||x.datos_anteriores)].join(' ').toLowerCase().includes(q));document.getElementById('tablaHistorial').innerHTML=a.length?a.slice(0,300).map(x=>{const reg=nombreRegistro(x.modulo,x.datos_nuevos||x.datos_anteriores);const dif=diferenciaLista(x.datos_anteriores,x.datos_nuevos);const resumen=x.accion==='CREAR'?'Registro creado':x.accion.includes('ELIMINAR')?'Registro eliminado':x.accion==='RESTAURAR'?'Registro restaurado':(dif.length?`${dif.length} campo${dif.length===1?'':'s'} modificado${dif.length===1?'':'s'}`:'Sin cambios');return `<tr><td>${esc(new Date(x.created_at).toLocaleString('es-PE'))}</td><td><span class="audit-user">${esc(x.usuario_email||'—')}</span></td><td><span class="audit-role">${esc(x.rol||'—')}</span></td><td>${esc(x.modulo)}</td><td><span class="audit-action ${accionClase(x.accion)}">${esc(x.accion)}</span></td><td><b>${esc(reg)}</b></td><td><div class="audit-summary">${esc(resumen)}</div><button class="btn muted audit-view" style="margin-top:7px" onclick="verDetalleHistorial('${x.id}')">Ver cambios</button></td></tr>`}).join(''):emptyRow(7)}
+function limpiarPapeleraLocal(){const now=Date.now();papeleraLocal=papeleraLocal.filter(x=>new Date(x.vence_at).getTime()>now);localStorage.setItem('gym_papelera_v1',JSON.stringify(papeleraLocal))}
+function renderPapelera(){if(usuarioActual?.rol!=='administrador')return;limpiarPapeleraLocal();document.getElementById('tablaPapelera').innerHTML=papeleraLocal.length?papeleraLocal.map(x=>`<tr><td>${new Date(x.eliminado_at).toLocaleString('es-PE')}</td><td>${esc(x.modulo)}</td><td>${esc(x.registro_id)}</td><td>${esc(x.usuario_email||'—')}</td><td>${new Date(x.vence_at).toLocaleDateString('es-PE')}</td><td><button class="btn primary" onclick="restaurarPapelera('${x.id}')">Restaurar</button> <button class="btn danger" onclick="borrarDefinitivo('${x.id}')">Eliminar definitivo</button></td></tr>`).join(''):emptyRow(6)}
+async function restaurarPapelera(pid){
+ if(usuarioActual?.rol!=='administrador')return;
+ const x=papeleraLocal.find(z=>z.id===pid);if(!x)return;
+ let key=x.modulo==='cliente'?'clientes':x.modulo==='membresia'?'membresias':x.modulo==='producto'?'productos':x.modulo==='venta'?'ventas':x.modulo==='compra'?'compras':'asistencias';
+ if(db[key].some(r=>r.id===x.registro_id))return alert('Ya existe un registro con ese ID.');
+ const fecha=fechaDeRegistro(x.modulo,x.datos);
+ if(fecha&&cajaCerrada(fecha)&&usuarioActual?.rol==='administrador'&&!(modoCorreccionCaja&&fechaCorreccionCaja===fecha)){
+   const motivo=prompt('La caja está cerrada. Ingresá el motivo para restaurar este registro:');if(!motivo||!motivo.trim())return;
+   modoCorreccionCaja=true;fechaCorreccionCaja=fecha;
+   const c=cajaCerrada(fecha);c.estado='correccion';c.motivo_correccion=motivo.trim();c.corregida_por=usuarioActual.id;c.corregida_email=usuarioActual.email||'';c.corregida_at=ahoraISO();localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));
+   await persistirCierre(c);await registrarHistorial('caja','REABRIR_CORRECCION',c.id,'Caja reabierta para restaurar un registro. Motivo: '+motivo.trim(),null,c);
+ } else if(fecha&&cajaCerrada(fecha)&&!(usuarioActual?.rol==='administrador'&&modoCorreccionCaja&&fechaCorreccionCaja===fecha)) return alert(bloqueoCajaMensaje(fecha));
+ // Restaurar una venta vuelve a descontar el stock que se devolvió al eliminarla.
+ if(x.modulo==='venta'){
+   const p=db.productos.find(p=>p.id===x.datos.productoId);if(!p)return alert('No se puede restaurar la venta porque el producto ya no existe.');
+   const cantidad=Number(x.datos.cantidad||0);if(cantidad>Number(p.stock||0))return alert('No hay stock suficiente para restaurar esta venta. Stock actual: '+p.stock+'. Se necesitan '+cantidad+'.');
+   p.stock=Number(p.stock||0)-cantidad;
+ }
+ db[key].push(x.datos);papeleraLocal=papeleraLocal.filter(z=>z.id!==pid);localStorage.setItem('gym_papelera_v1',JSON.stringify(papeleraLocal));
+ await registrarHistorial(x.modulo,'RESTAURAR',x.registro_id,'Registro restaurado desde papelera'+(x.modulo==='venta'?' y stock descontado nuevamente.':''),null,x.datos);await save();renderPapelera();alert('Registro restaurado correctamente.'+(x.modulo==='venta'?' El stock fue actualizado nuevamente.':''));
+}
+async function borrarDefinitivo(pid){if(usuarioActual?.rol!=='administrador')return;if(!confirm('Esta acción no se puede deshacer. ¿Eliminar definitivamente?'))return;const x=papeleraLocal.find(z=>z.id===pid);if(!x)return;papeleraLocal=papeleraLocal.filter(z=>z.id!==pid);localStorage.setItem('gym_papelera_v1',JSON.stringify(papeleraLocal));if(supabaseConnected)try{await supabaseClient.from('papelera').delete().eq('id',pid)}catch(e){}await registrarHistorial(x.modulo,'ELIMINAR_DEFINITIVO',x.registro_id,'Registro eliminado definitivamente',x.datos,null);renderPapelera()}
+async function renderUsuarios(){if(usuarioActual?.rol!=='administrador')return;const {data,error}=await supabaseClient.from('perfiles_usuarios').select('*').order('created_at',{ascending:false});if(error){document.getElementById('tablaUsuarios').innerHTML=emptyRow(5,error.message);return;}document.getElementById('tablaUsuarios').innerHTML=(data||[]).map(u=>`<tr><td>${esc(u.nombre||'—')}</td><td>${esc(u.email||'—')}</td><td><select onchange="cambiarRolUsuario('${u.id}',this.value)"><option value="administrador" ${u.rol==='administrador'?'selected':''}>Administrador</option><option value="asistente" ${u.rol==='asistente'?'selected':''}>Asistente</option></select></td><td>${u.activo?'Activo':'Inactivo'}</td><td>${u.id===usuarioActual.id?'Cuenta actual':'Cuenta administrada'}</td></tr>`).join('')||emptyRow(5,'No hay perfiles creados.') }
+async function cambiarRolUsuario(id,rol){if(usuarioActual?.rol!=='administrador')return;if(id===usuarioActual.id&&rol!=='administrador')return alert('No podés quitarte tu propio rol de administrador desde acá.');const {error}=await supabaseClient.from('perfiles_usuarios').update({rol}).eq('id',id);if(error)return alert(error.message);alert('Rol actualizado.');}
+async function cargarPerfil(session){if(!session){usuarioActual=null;document.getElementById('loginScreen').classList.remove('hidden');return;}const {data,error}=await supabaseClient.from('perfiles_usuarios').select('*').eq('id',session.user.id).single();if(error||!data||!data.activo){await supabaseClient.auth.signOut();document.getElementById('loginMsg').textContent='Tu cuenta no tiene un perfil activo. Pedile al administrador que te asigne un rol.';return;}usuarioActual=data;document.getElementById('loginScreen').classList.add('hidden');document.getElementById('userRole').textContent=data.rol==='administrador'?'ADMINISTRADOR':'ASISTENTE';document.getElementById('userEmail').textContent=data.email||session.user.email;aplicarPermisos();loadFromSupabase();}
+const TAB_AUTH_KEY='gym_tab_auth_v14';
+async function iniciarSesion(e){e.preventDefault();const email=document.getElementById('loginEmail').value.trim(),password=document.getElementById('loginPassword').value;document.getElementById('loginMsg').textContent='Ingresando…';const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});if(error){sessionStorage.removeItem(TAB_AUTH_KEY);document.getElementById('loginMsg').textContent=error.message;return;}sessionStorage.setItem(TAB_AUTH_KEY,'1');if(data?.session)await cargarPerfil(data.session)}
+async function cerrarSesion(){sessionStorage.removeItem(TAB_AUTH_KEY);await supabaseClient.auth.signOut();location.reload()}
+async function iniciarSesionSoloEnEstaPestana(){const activa=sessionStorage.getItem(TAB_AUTH_KEY)==='1';if(!activa){await supabaseClient.auth.signOut();await cargarPerfil(null);return;}const {data}=await supabaseClient.auth.getSession();await cargarPerfil(data.session)}
+document.getElementById('loginForm').addEventListener('submit',iniciarSesion);
+iniciarSesionSoloEnEstaPestana();
+supabaseClient.auth.onAuthStateChange((_event,session)=>{if(session&&sessionStorage.getItem(TAB_AUTH_KEY)==='1'){cargarPerfil(session)}else if(!session){sessionStorage.removeItem(TAB_AUTH_KEY);cargarPerfil(null)}});
+
+function cambiarTipoReporte(){
+ const tipo=document.getElementById('tipoReporte').value;
+ const desc={clientes:'Listado completo de clientes con fecha y hora de registro y última actualización.',membresias:'Solo membresías y boletas registradas, incluyendo fecha y hora exacta de registro.',asistencias:'Solo asistencias registradas con la hora exacta de ingreso.',productos:'Inventario actual de productos y stock, con fecha y hora de registro/actualización.',ventas:'Solo ventas de productos con fecha de operación y hora exacta de registro.',compras:'Solo compras registradas con fecha de operación y hora exacta de registro.'};
+ document.getElementById('reporteDescripcion').textContent=desc[tipo];
+ if(tipo==='productos')document.getElementById('repDesde').disabled=document.getElementById('repHasta').disabled=true;else{document.getElementById('repDesde').disabled=false;document.getElementById('repHasta').disabled=false}
+}
+function generarReporte(){
+ const tipo=document.getElementById('tipoReporte').value,desde=document.getElementById('repDesde').value,hasta=document.getElementById('repHasta').value;
+ let rows=[];
+ if(tipo==='clientes') rows=db.clientes.map(c=>({Codigo:c.codigo,Nombre:c.nombre,DNI:c.dni,Celular:c.celular,Correo:c.correo,Sexo:c.sexo,'Registrado':fechaHora(c,'registrado_at'),'Última actualización':fechaHora(c,'actualizado_at')}));
+ if(tipo==='membresias') rows=db.membresias.filter(x=>x.fecha>=desde&&x.fecha<=hasta).map(x=>({Boleta:x.boleta,Codigo:x.clienteCodigo||'',Cliente:x.clienteNombre||'',Membresia:x.tipo,Inicio:x.inicio,Fin:x.fin,Total:x.total,'Medio de pago':x.pago,'N.º de operación':x.numeroOperacion||'',Registrado:fechaHora(x,'registrado_at')}));
+ if(tipo==='asistencias') rows=db.asistencias.filter(x=>x.fecha>=desde&&x.fecha<=hasta).map(x=>({Codigo:x.codigo,Cliente:x.nombre,Membresia:x.membresia,Fecha:x.fecha,'Hora exacta':horaExacta(x,'registrado_at')}));
+ if(tipo==='productos') rows=db.productos.map(x=>({Codigo:x.codigo,Producto:x.nombre,Categoria:x.categoria,Precio:x.precio,Stock:x.stock,Registrado:fechaHora(x,'registrado_at'),'Última actualización':fechaHora(x,'actualizado_at')}));
+ if(tipo==='ventas') rows=db.ventas.filter(x=>x.fecha>=desde&&x.fecha<=hasta).map(x=>({Fecha:x.fecha,'Hora exacta':horaExacta(x,'registrado_at'),Producto:x.producto,Categoria:x.categoria,Cantidad:x.cantidad,'Precio unitario':x.precio,Total:x.total,'Medio de pago':x.pago,'N.º de operación':x.numeroOperacion||'','Tipo de operación':x.tipoOperacion||'Venta'}));
+ if(tipo==='compras') rows=db.compras.filter(x=>x.fecha>=desde&&x.fecha<=hasta).map(x=>({Fecha:x.fecha,'Hora exacta':horaExacta(x,'registrado_at'),Tipo:x.tipo,Descripcion:x.descripcion,Monto:x.monto,'Medio de pago':x.pago,'N.º de operación':x.numeroOperacion||''}));
+ reporteData=rows;
+ const keys=rows.length?Object.keys(rows[0]):(tipo==='clientes'?['Codigo','Nombre','DNI','Celular','Correo','Sexo']:tipo==='productos'?['Codigo','Producto','Categoria','Precio','Stock']:['Sin registros']);
+ document.getElementById('reporteResultado').innerHTML=`<p><b>${rows.length}</b> registros encontrados${tipo==='productos'?'':' entre '+desde+' y '+hasta}.</p><table><thead><tr>${keys.map(k=>`<th>${esc(k)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${keys.map(k=>`<td>${k==='Total'||k==='Monto'||k==='Precio'||k==='Precio unitario'?money(r[k]):esc(r[k]??'')}</td>`).join('')}</tr>`).join('')||emptyRow(keys.length)}</tbody></table>`;
+}
+function exportarReporte(){
+  if(!reporteData.length)generarReporte();
+  if(!reporteData.length)return alert('No hay datos para exportar.');
+  if(typeof XLSX==='undefined'){alert('No se pudo cargar el módulo de Excel. Abrí el demo con conexión a Internet y volvé a intentarlo.');return;}
+  const tipo=document.getElementById('tipoReporte').value;
+  const nombres={clientes:'clientes',membresias:'membresias_boletas',asistencias:'asistencias',productos:'productos_stock',ventas:'ventas',compras:'compras'};
+  const keys=Object.keys(reporteData[0]);
+  const rows=[keys,...reporteData.map(r=>keys.map(k=>r[k]??''))];
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=keys.map(k=>({wch:Math.max(14,Math.min(35,k.length+8))}));
+  XLSX.utils.book_append_sheet(wb,ws,'Reporte');
+  XLSX.writeFile(wb,`reporte_${nombres[tipo]||tipo}.xlsx`);
+}
+document.querySelectorAll('.nav button').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(btn.dataset.section).classList.add('active');document.getElementById('pageTitle').textContent=btn.textContent.replace(/^[^\s]+\s/,'')}));
+document.querySelectorAll('input[id^="search"]').forEach(i=>i.addEventListener('input',renderAll));
+document.getElementById('fechaCaja').addEventListener('change',renderCaja);
+document.getElementById('tipoReporte').addEventListener('change',cambiarTipoReporte);
+cambiarTipoReporte();
+renderAll();
+</script>
+
+<div class="modal audit-detail-modal" id="historialDetalleModal"><div class="modal-box"><div class="modal-head"><h2>🔎 Detalle del movimiento</h2><button class="close" onclick="cerrarDetalleHistorial()">×</button></div><div id="historialDetalleContenido"></div></div></div>
+</body>
+</html>
