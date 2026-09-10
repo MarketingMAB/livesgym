@@ -112,7 +112,11 @@ button,input,select{font:inherit}.app{display:flex;min-height:100vh}.sidebar{wid
 <section id="asistencia" class="section">
 <div class="panel">
 <h2>Registrar asistencia rápida</h2>
-<div class="toolbar"><input id="codigoAsistencia" placeholder="Ingresá código de cliente" oninput="buscarClienteAsistencia()">${usuarioActual?.rol==='administrador'?'<label>Fecha de asistencia <input type="date" id="fechaAsistenciaAdmin" value="'+todayISO()+'"></label>':''}<button class="btn primary" onclick="registrarAsistencia()">Registrar asistencia${usuarioActual?.rol==='administrador'?' en fecha seleccionada':' de hoy'}</button></div>
+<div class="toolbar">
+<input id="codigoAsistencia" placeholder="Ingresá código de cliente" oninput="buscarClienteAsistencia()">
+<span id="controlFechaAsistenciaAdmin"></span>
+<button id="btnRegistrarAsistencia" class="btn primary" onclick="registrarAsistencia()">Registrar asistencia de hoy</button>
+</div>
 <div id="infoAsistencia" class="card">Ingresá un código para cargar automáticamente los datos del cliente.</div>
 </div>
 <div class="panel"><div class="toolbar"><input id="searchAsistencia" placeholder="🔍 Buscar código, nombre o fecha"><button id="bulk-asistencia" class="btn danger" onclick="eliminarSeleccionados('asistencia')" style="display:none">🗑️ Eliminar seleccionados (<span id="bulk-count-asistencia">0</span>)</button></div>
@@ -618,6 +622,21 @@ function calcFin(){let f=document.getElementById('modalForm');if(!f||!f.elements
 function previewProducto(){let f=document.getElementById('modalForm');if(!f||!f.elements.productoId)return;let p=db.productos.find(x=>x.id===f.elements.productoId.value);if(f.elements.codigoProducto)f.elements.codigoProducto.value=p?p.codigo:'';if(f.elements.nombreProducto)f.elements.nombreProducto.value=p?p.nombre:'';f.elements.precio.value=p?p.precio:'';calcVenta()}
 function previewProductoPorCodigo(){let f=document.getElementById('modalForm');if(!f||!f.elements.codigoProducto)return;const code=String(f.elements.codigoProducto.value||'').trim();const p=db.productos.find(x=>String(x.codigo)===code);if(f.elements.productoId)f.elements.productoId.value=p?p.id:'';if(f.elements.nombreProducto)f.elements.nombreProducto.value=p?p.nombre:'';if(f.elements.precio)f.elements.precio.value=p?p.precio:'';if(code&&!p&&f.elements.nombreProducto)f.elements.nombreProducto.value='Producto no encontrado';calcVenta()}
 function calcVenta(){let f=document.getElementById('modalForm');if(!f||!f.elements.cantidad)return;f.elements.total.value=(Number(f.elements.precio.value||0)*Number(f.elements.cantidad.value||0)).toFixed(2)}
+function renderControlFechaAsistenciaAdmin(){
+  const box=document.getElementById('controlFechaAsistenciaAdmin');
+  const btn=document.getElementById('btnRegistrarAsistencia');
+  if(!box||!btn)return;
+  const admin=usuarioActual?.rol==='administrador';
+  if(admin){
+    const actual=document.getElementById('fechaAsistenciaAdmin')?.value||todayISO();
+    box.innerHTML='<label>Fecha de asistencia <input type="date" id="fechaAsistenciaAdmin" value="'+actual+'"></label>';
+    btn.textContent='Registrar asistencia en fecha seleccionada';
+  }else{
+    box.innerHTML='';
+    btn.textContent='Registrar asistencia de hoy';
+  }
+}
+
 function buscarClienteAsistencia(){let code=document.getElementById('codigoAsistencia').value,c=db.clientes.find(x=>String(x.codigo)===String(code));let box=document.getElementById('infoAsistencia');if(!c){box.textContent='Cliente no encontrado.';return}let m=activeMember(c.codigo);box.innerHTML=`<b>${esc(c.nombre)}</b><br>Código: ${c.codigo}<br>Membresía: ${m?esc(m.tipo):'Sin membresía'}<br>Vigencia: ${m?m.inicio+' al '+m.fin:'—'}<br><br>${m&&m.fin>=todayISO()?'<span class="pill">MEMBRESÍA VIGENTE</span>':'<span class="pill expired">MEMBRESÍA VENCIDA / SIN MEMBRESÍA</span>'}`}
 async function registrarAsistencia(){let code=document.getElementById('codigoAsistencia').value,c=db.clientes.find(x=>String(x.codigo)===String(code));if(!c)return alert('Ingresá un código válido.');const fecha=usuarioActual?.rol==='administrador'?(document.getElementById('fechaAsistenciaAdmin')?.value||todayISO()):todayISO();let m=activeMember(c.codigo);if(!m||m.fin<fecha)return alert('La membresía no estaba vigente en la fecha seleccionada.');if(db.asistencias.some(a=>String(a.codigo)===String(code)&&a.fecha===fecha))return alert('La asistencia ya está registrada para esa fecha.');const asistencia={id:crypto.randomUUID(),codigo:c.codigo,nombre:c.nombre,membresia:m.tipo,fecha,registrado_at:ahoraISO()};db.asistencias.push(asistencia);await registrarHistorial('asistencia','CREAR',asistencia.id,'Asistencia registrada'+(usuarioActual?.rol==='administrador'&&fecha!==todayISO()?' con fecha histórica por administrador':''),null,asistencia);await save();alert('Asistencia registrada para '+fecha+'.')}
 async function registrarHistorial(modulo,accion,registroId,detalle='',antes=null,despues=null){
@@ -694,7 +713,7 @@ async function restaurarPapelera(pid){
 async function borrarDefinitivo(pid){if(usuarioActual?.rol!=='administrador')return;if(!confirm('Esta acción no se puede deshacer. ¿Eliminar definitivamente?'))return;const x=papeleraLocal.find(z=>z.id===pid);if(!x)return;papeleraLocal=papeleraLocal.filter(z=>z.id!==pid);localStorage.setItem('gym_papelera_v1',JSON.stringify(papeleraLocal));if(supabaseConnected)try{await supabaseClient.from('papelera').delete().eq('id',pid)}catch(e){}await registrarHistorial(x.modulo,'ELIMINAR_DEFINITIVO',x.registro_id,'Registro eliminado definitivamente',x.datos,null);renderPapelera()}
 async function renderUsuarios(){if(usuarioActual?.rol!=='administrador')return;const {data,error}=await supabaseClient.from('perfiles_usuarios').select('*').order('created_at',{ascending:false});if(error){document.getElementById('tablaUsuarios').innerHTML=emptyRow(5,error.message);return;}document.getElementById('tablaUsuarios').innerHTML=(data||[]).map(u=>`<tr><td>${esc(u.nombre||'—')}</td><td>${esc(u.email||'—')}</td><td><select onchange="cambiarRolUsuario('${u.id}',this.value)"><option value="administrador" ${u.rol==='administrador'?'selected':''}>Administrador</option><option value="asistente" ${u.rol==='asistente'?'selected':''}>Asistente</option></select></td><td>${u.activo?'Activo':'Inactivo'}</td><td>${u.id===usuarioActual.id?'Cuenta actual':'Cuenta administrada'}</td></tr>`).join('')||emptyRow(5,'No hay perfiles creados.') }
 async function cambiarRolUsuario(id,rol){if(usuarioActual?.rol!=='administrador')return;if(id===usuarioActual.id&&rol!=='administrador')return alert('No podés quitarte tu propio rol de administrador desde acá.');const {error}=await supabaseClient.from('perfiles_usuarios').update({rol}).eq('id',id);if(error)return alert(error.message);alert('Rol actualizado.');}
-async function cargarPerfil(session){if(!session){usuarioActual=null;document.getElementById('loginScreen').classList.remove('hidden');return;}const {data,error}=await supabaseClient.from('perfiles_usuarios').select('*').eq('id',session.user.id).single();if(error||!data||!data.activo){await supabaseClient.auth.signOut();document.getElementById('loginMsg').textContent='Tu cuenta no tiene un perfil activo. Pedile al administrador que te asigne un rol.';return;}usuarioActual=data;document.getElementById('loginScreen').classList.add('hidden');document.getElementById('userRole').textContent=data.rol==='administrador'?'ADMINISTRADOR':'ASISTENTE';document.getElementById('userEmail').textContent=data.email||session.user.email;aplicarPermisos();await loadFromSupabase();iniciarTiempoReal();}
+async function cargarPerfil(session){if(!session){usuarioActual=null;document.getElementById('loginScreen').classList.remove('hidden');return;}const {data,error}=await supabaseClient.from('perfiles_usuarios').select('*').eq('id',session.user.id).single();if(error||!data||!data.activo){await supabaseClient.auth.signOut();document.getElementById('loginMsg').textContent='Tu cuenta no tiene un perfil activo. Pedile al administrador que te asigne un rol.';return;}usuarioActual=data;document.getElementById('loginScreen').classList.add('hidden');renderControlFechaAsistenciaAdmin();document.getElementById('userRole').textContent=data.rol==='administrador'?'ADMINISTRADOR':'ASISTENTE';document.getElementById('userEmail').textContent=data.email||session.user.email;aplicarPermisos();await loadFromSupabase();iniciarTiempoReal();}
 const TAB_AUTH_KEY='gym_tab_auth_v14';
 async function iniciarSesion(e){e.preventDefault();const email=document.getElementById('loginEmail').value.trim(),password=document.getElementById('loginPassword').value;document.getElementById('loginMsg').textContent='Ingresando…';const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});if(error){sessionStorage.removeItem(TAB_AUTH_KEY);document.getElementById('loginMsg').textContent=error.message;return;}sessionStorage.setItem(TAB_AUTH_KEY,'1');if(data?.session)await cargarPerfil(data.session)}
 async function cerrarSesion(){sessionStorage.removeItem(TAB_AUTH_KEY);await supabaseClient.auth.signOut();location.reload()}
@@ -742,6 +761,7 @@ document.querySelectorAll('input[id^="search"]').forEach(i=>i.addEventListener('
 document.getElementById('fechaCaja').addEventListener('change',renderCaja);
 document.getElementById('tipoReporte').addEventListener('change',cambiarTipoReporte);
 cambiarTipoReporte();
+renderControlFechaAsistenciaAdmin();
 renderAll();
 </script>
 
