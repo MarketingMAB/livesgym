@@ -320,7 +320,8 @@ function fechaHora(row,campo='registrado_at'){const v=row?.[campo];return v?new 
 function horaExacta(row,campo='registrado_at'){const v=row?.[campo];return v?new Date(v).toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—'}
 function fechaDeRegistro(type,row){return type==='membresia'?row.fecha||row.inicio:type==='venta'||type==='compra'?row.fecha:type==='asistencia'?row.fecha:null}
 function cajaCerrada(fecha){return cajasCerradasLocal.find(x=>x.fecha===fecha&&x.estado==='cerrada')||null}
-function registroBloqueadoPorCaja(type,row){const fecha=fechaDeRegistro(type,row); return fecha && cajaCerrada(fecha) && !(usuarioActual?.rol==='administrador'&&modoCorreccionCaja)}
+function cajaEnCorreccion(fecha){return cajasCerradasLocal.find(x=>x.fecha===fecha&&x.estado==='correccion')||null}
+function registroBloqueadoPorCaja(type,row){const fecha=fechaDeRegistro(type,row); if(!fecha)return false; return !!(cajaCerrada(fecha) || (cajaEnCorreccion(fecha) && usuarioActual?.rol!=='administrador'))}
 function confirmarCorreccionCaja(fecha){if(usuarioActual?.rol!=='administrador')return false;const c=cajaCerrada(fecha);if(!c)return false;const motivo=prompt('La caja de '+fecha+' está cerrada. Ingresá el motivo de la corrección:');if(!motivo||!motivo.trim())return false;modoCorreccionCaja=true;registrarHistorial('caja','CORRECCION',c.id,'Caja cerrada puesta en modo corrección. Motivo: '+motivo.trim(),c,{...c,estado:'correccion',motivo_correccion:motivo.trim()});return true}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function nextCode(arr){return arr.length?Math.max(...arr.map(x=>Number(x.codigo)||0))+1:1}
@@ -332,7 +333,15 @@ function duracion(tipo){return {'Gym Diario':1,'Gym Diario con Caminadora':1,'Gy
 function addDays(date,n){let d=new Date(date+'T12:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
 function renderAll(){renderClientes();renderMembresias();renderProductos();renderVentas();renderCompras();renderAsistencia();renderDashboard();renderCaja();renderHistorial();renderPapelera();renderUsuarios();aplicarPermisos();}
 function emptyRow(cols,msg='Sin registros'){return `<tr><td colspan="${cols}">${msg}</td></tr>`}
-function actionBtns(type,id){let b=`<button class="btn muted" onclick="editRecord('${type}','${id}')">Editar</button>`; if(usuarioActual?.rol==='administrador') b+=` <button class="btn danger" onclick="deleteRecord('${type}','${id}')">Eliminar</button>`; return b}
+function actionBtns(type,id){
+ const key={cliente:'clientes',membresia:'membresias',producto:'productos',venta:'ventas',compra:'compras',asistencia:'asistencias'}[type];
+ const row=(db[key]||[]).find(x=>x.id===id);
+ const fecha=row?fechaDeRegistro(type,row):null;
+ const bloqueado=fecha && cajaEnCorreccion(fecha) && usuarioActual?.rol!=='administrador';
+ let b=bloqueado?'':`<button class="btn muted" onclick="editRecord('${type}','${id}')">Editar</button>`;
+ if(usuarioActual?.rol==='administrador') b+=` <button class="btn danger" onclick="deleteRecord('${type}','${id}')">Eliminar</button>`;
+ return b||'<span class="readonly-note">🔒 Bloqueado por corrección de caja</span>';
+}
 function checkCell(type,id){const marcado=seleccionesMasivas[type]?.includes(String(id));return `<input type="checkbox" class="fila-check" ${marcado?'checked':''} onchange="toggleSeleccion('${type}','${id}',this.checked)" aria-label="Seleccionar registro">`}
 function bulkToolbar(type,searchId,placeholder,addLabel,addAction){return `<div class="toolbar"><input id="${searchId}" placeholder="${placeholder}">${addAction?`<button class="btn primary" onclick="${addAction}">${addLabel}</button>`:''}<button id="bulk-${type}" class="btn danger" onclick="eliminarSeleccionados('${type}')" style="display:none">🗑️ Eliminar seleccionados (<span id="bulk-count-${type}">0</span>)</button></div>`}
 function toggleSeleccion(type,id,checked){const arr=seleccionesMasivas[type]||[];const sid=String(id);if(checked&&!arr.includes(sid))arr.push(sid);if(!checked){const i=arr.indexOf(sid);if(i>=0)arr.splice(i,1)}seleccionesMasivas[type]=arr;actualizarBulkUI(type)}
@@ -392,14 +401,15 @@ function renderDashboard(){
  document.getElementById('alertasStock').innerHTML=bajos.length?bajos.map(p=>`<div class="alert-item"><b>${esc(p.nombre)}</b> — ${p.stock} unidades</div>`).join(''):'Todos los productos tienen más de 5 unidades.';
 }
 async function guardarCierreCaja(fecha){
-  if(!usuarioActual)return;
-  if(cajaCerrada(fecha))return alert('La caja de esta fecha ya está cerrada.');
-  const mem=db.membresias.filter(x=>x.fecha===fecha), ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'), com=db.compras.filter(x=>x.fecha===fecha);
-  const totalVentas=mem.reduce((s,x)=>s+Number(x.total||0),0)+ven.reduce((s,x)=>s+Number(x.total||0),0);
-  const totalCompras=com.reduce((s,x)=>s+Number(x.monto||0),0);
-  const cierre={id:crypto.randomUUID(),fecha,estado:'cerrada',cerrado_por:usuarioActual.id,cerrado_email:usuarioActual.email||'',cerrado_rol:usuarioActual.rol||'',cerrado_at:ahoraISO(),total_ventas:totalVentas,total_compras:totalCompras,total_cierre:totalVentas-totalCompras};
-  cajasCerradasLocal.unshift(cierre);localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));
-  await registrarHistorial('caja','CERRAR',cierre.id,'Caja cerrada para '+fecha,null,cierre);modoCorreccionCaja=false;renderCaja();alert('Caja del '+fecha+' cerrada correctamente.');
+ if(!usuarioActual)return;
+ if(cajaEnCorreccion(fecha))return alert('La caja del '+fecha+' está en corrección. Solo el administrador puede modificarla y cerrarla nuevamente.');
+ if(cajaCerrada(fecha))return alert('La caja de esta fecha ya está cerrada.');
+ const mem=db.membresias.filter(x=>x.fecha===fecha),ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'),com=db.compras.filter(x=>x.fecha===fecha);
+ const totalVentas=mem.reduce((s,x)=>s+Number(x.total||0),0)+ven.reduce((s,x)=>s+Number(x.total||0),0),totalCompras=com.reduce((s,x)=>s+Number(x.monto||0),0);
+ const c={id:crypto.randomUUID(),fecha,estado:'cerrada',cerrado_por:usuarioActual.id,cerrado_email:usuarioActual.email||'',cerrado_rol:usuarioActual.rol||'',cerrado_at:ahoraISO(),total_ventas:totalVentas,total_compras:totalCompras,total_cierre:totalVentas-totalCompras};
+ cajasCerradasLocal.unshift(c);
+ try{await persistirCierre(c);await registrarHistorial('caja','CERRAR',c.id,'Caja cerrada para '+fecha,null,c);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('Caja del '+fecha+' cerrada correctamente.');}
+ catch(e){cajasCerradasLocal=cajasCerradasLocal.filter(x=>x.id!==c.id);localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));alert('No se pudo guardar el cierre. Verificá la conexión y los permisos de Supabase.');}
 }
 async function reabrirCajaParaCorreccion(fecha){
   if(usuarioActual?.rol!=='administrador')return alert('Solo el administrador puede corregir una caja cerrada.');
@@ -411,30 +421,38 @@ async function reabrirCajaParaCorreccion(fecha){
   await registrarHistorial('caja','REABRIR_CORRECCION',c.id,'Caja reabierta temporalmente para corrección. Motivo: '+motivo.trim(),null,c);renderCaja();alert('Caja en modo corrección. Podés corregir ventas, compras o membresías de esa fecha. Al terminar, volvé a cerrar la caja.');
 }
 async function finalizarCorreccionCaja(fecha){
-  if(usuarioActual?.rol!=='administrador')return;
-  const c=cajasCerradasLocal.find(x=>x.fecha===fecha);if(!c)return;
-  const mem=db.membresias.filter(x=>x.fecha===fecha),ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'),com=db.compras.filter(x=>x.fecha===fecha);
-  const tv=mem.reduce((s,x)=>s+Number(x.total||0),0)+ven.reduce((s,x)=>s+Number(x.total||0),0),tg=com.reduce((s,x)=>s+Number(x.monto||0),0);
-  c.estado='cerrada';c.total_ventas=tv;c.total_compras=tg;c.total_cierre=tv-tg;c.cerrado_por=usuarioActual.id;c.cerrado_email=usuarioActual.email||'';c.cerrado_rol=usuarioActual.rol||'';c.cerrado_at=ahoraISO();c.recerrado_at=ahoraISO();
-  localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));await registrarHistorial('caja','RECERRAR',c.id,'Caja cerrada nuevamente después de una corrección',null,c);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('La caja volvió a quedar cerrada.');
+ if(usuarioActual?.rol!=='administrador')return alert('Solo el administrador puede cerrar nuevamente una caja que está en corrección.');
+ const c=cajaEnCorreccion(fecha);if(!c)return alert('La caja no está en modo corrección.');
+ const mem=db.membresias.filter(x=>x.fecha===fecha),ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'),com=db.compras.filter(x=>x.fecha===fecha);const tv=mem.reduce((s,x)=>s+Number(x.total||0),0)+ven.reduce((s,x)=>s+Number(x.total||0),0),tg=com.reduce((s,x)=>s+Number(x.monto||0),0);
+ const anterior={...c};
+ c.estado='cerrada';c.total_ventas=tv;c.total_compras=tg;c.total_cierre=tv-tg;c.recerrado_at=ahoraISO();c.cerrado_por=usuarioActual.id;c.cerrado_email=usuarioActual.email||'';c.cerrado_rol=usuarioActual.rol||'';c.cerrado_at=ahoraISO();
+ try{await persistirCierre(c);await registrarHistorial('caja','RECERRAR',c.id,'Caja cerrada nuevamente después de una corrección',anterior,c);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('La caja volvió a quedar cerrada.');}
+ catch(e){Object.assign(c,anterior);alert('No se pudo cerrar la caja nuevamente. Verificá la conexión y los permisos de Supabase.');console.error(e)}
 }
 function renderEstadoCaja(fecha){
  const el=document.getElementById('estadoCaja');if(!el)return;const c=cajasCerradasLocal.find(x=>x.fecha===fecha);
  if(!c){el.innerHTML='<span class="pill estado-abierta">🟡 CAJA ABIERTA</span><span class="caja-info">Todavía no se ha realizado el cierre de esta fecha.</span><button class="btn primary" onclick="guardarCierreCaja(\''+fecha+'\')">🔒 Cerrar caja del día</button>';return;}
  const hora=new Date(c.cerrado_at).toLocaleString('es-PE');
- if(c.estado==='correccion'){el.innerHTML='<span class="pill estado-correccion">🔵 EN CORRECCIÓN</span><span class="caja-info">Reabierta por '+esc(c.corregida_email||'administrador')+' el '+esc(new Date(c.corregida_at).toLocaleString('es-PE'))+'. Motivo: '+esc(c.motivo_correccion||'—')+'</span><button class="btn primary" onclick="finalizarCorreccionCaja(\''+fecha+'\')">🔒 Cerrar nuevamente</button>';return;}
+ if(c.estado==='correccion'){el.innerHTML='<span class="pill estado-correccion">🔵 EN CORRECCIÓN</span><span class="caja-info">Reabierta por '+esc(c.corregida_email||'administrador')+' el '+esc(new Date(c.corregida_at).toLocaleString('es-PE'))+'. Motivo: '+esc(c.motivo_correccion||'—')+'</span>'+(usuarioActual?.rol==='administrador'?'<button class="btn primary" onclick="finalizarCorreccionCaja(\''+fecha+'\')">🔒 Cerrar nuevamente</button>':'<span class="readonly-note">🔒 Solo el administrador puede modificar y cerrar esta caja.</span>');return;}
  el.innerHTML='<span class="pill estado-cerrada">🟢 CAJA CERRADA</span><span class="caja-info">Cerrada por <b>'+esc(c.cerrado_email||'—')+'</b> ('+esc(c.cerrado_rol||'—')+') el '+esc(hora)+' · Cierre: '+money(c.total_cierre)+'</span>'+(usuarioActual?.rol==='administrador'?'<button class="btn btn-warning" onclick="reabrirCajaParaCorreccion(\''+fecha+'\')">✏️ Corregir caja</button>':'');
 }
 async function persistirCierre(c){
+ if(supabaseConnected&&usuarioActual){
+  const {error}=await supabaseClient.from('cajas_cierres').upsert(c,{onConflict:'fecha'});
+  if(error){console.error('No se pudo guardar cierre remoto:',error);throw error;}
+ }
  localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));
- if(supabaseConnected&&usuarioActual){try{const {error}=await supabaseClient.from('cajas_cierres').upsert(c,{onConflict:'fecha'});if(error)console.warn('No se pudo guardar cierre remoto:',error.message)}catch(e){console.warn(e)}}
 }
 async function guardarCierreCaja(fecha){
- if(!usuarioActual)return;if(cajaCerrada(fecha))return alert('La caja de esta fecha ya está cerrada.');
+ if(!usuarioActual)return;
+ if(cajaEnCorreccion(fecha))return alert('La caja del '+fecha+' está en corrección. Solo el administrador puede modificarla y cerrarla nuevamente.');
+ if(cajaCerrada(fecha))return alert('La caja de esta fecha ya está cerrada.');
  const mem=db.membresias.filter(x=>x.fecha===fecha),ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'),com=db.compras.filter(x=>x.fecha===fecha);
  const totalVentas=mem.reduce((s,x)=>s+Number(x.total||0),0)+ven.reduce((s,x)=>s+Number(x.total||0),0),totalCompras=com.reduce((s,x)=>s+Number(x.monto||0),0);
  const c={id:crypto.randomUUID(),fecha,estado:'cerrada',cerrado_por:usuarioActual.id,cerrado_email:usuarioActual.email||'',cerrado_rol:usuarioActual.rol||'',cerrado_at:ahoraISO(),total_ventas:totalVentas,total_compras:totalCompras,total_cierre:totalVentas-totalCompras};
- cajasCerradasLocal.unshift(c);await persistirCierre(c);await registrarHistorial('caja','CERRAR',c.id,'Caja cerrada para '+fecha,null,c);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('Caja del '+fecha+' cerrada correctamente.');
+ cajasCerradasLocal.unshift(c);
+ try{await persistirCierre(c);await registrarHistorial('caja','CERRAR',c.id,'Caja cerrada para '+fecha,null,c);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('Caja del '+fecha+' cerrada correctamente.');}
+ catch(e){cajasCerradasLocal=cajasCerradasLocal.filter(x=>x.id!==c.id);localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));alert('No se pudo guardar el cierre. Verificá la conexión y los permisos de Supabase.');}
 }
 async function reabrirCajaParaCorreccion(fecha){
  if(usuarioActual?.rol!=='administrador')return alert('Solo el administrador puede corregir una caja cerrada.');const c=cajaCerrada(fecha);if(!c)return;
@@ -442,14 +460,18 @@ async function reabrirCajaParaCorreccion(fecha){
  modoCorreccionCaja=true;fechaCorreccionCaja=fecha;c.estado='correccion';c.motivo_correccion=motivo.trim();c.corregida_por=usuarioActual.id;c.corregida_email=usuarioActual.email||'';c.corregida_at=ahoraISO();await persistirCierre(c);await registrarHistorial('caja','REABRIR_CORRECCION',c.id,'Caja reabierta temporalmente para corrección. Motivo: '+motivo.trim(),null,c);renderCaja();alert('Caja en modo corrección. Corregí el registro y luego cerrá nuevamente la caja.');
 }
 async function finalizarCorreccionCaja(fecha){
- if(usuarioActual?.rol!=='administrador')return;const c=cajasCerradasLocal.find(x=>x.fecha===fecha);if(!c)return;
+ if(usuarioActual?.rol!=='administrador')return alert('Solo el administrador puede cerrar nuevamente una caja que está en corrección.');
+ const c=cajaEnCorreccion(fecha);if(!c)return alert('La caja no está en modo corrección.');
  const mem=db.membresias.filter(x=>x.fecha===fecha),ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'),com=db.compras.filter(x=>x.fecha===fecha);const tv=mem.reduce((s,x)=>s+Number(x.total||0),0)+ven.reduce((s,x)=>s+Number(x.total||0),0),tg=com.reduce((s,x)=>s+Number(x.monto||0),0);
- c.estado='cerrada';c.total_ventas=tv;c.total_compras=tg;c.total_cierre=tv-tg;c.recerrado_at=ahoraISO();c.cerrado_por=usuarioActual.id;c.cerrado_email=usuarioActual.email||'';c.cerrado_rol=usuarioActual.rol||'';c.cerrado_at=ahoraISO();await persistirCierre(c);await registrarHistorial('caja','RECERRAR',c.id,'Caja cerrada nuevamente después de una corrección',null,c);modoCorreccionCaja=false;renderCaja();alert('La caja volvió a quedar cerrada.');
+ const anterior={...c};
+ c.estado='cerrada';c.total_ventas=tv;c.total_compras=tg;c.total_cierre=tv-tg;c.recerrado_at=ahoraISO();c.cerrado_por=usuarioActual.id;c.cerrado_email=usuarioActual.email||'';c.cerrado_rol=usuarioActual.rol||'';c.cerrado_at=ahoraISO();
+ try{await persistirCierre(c);await registrarHistorial('caja','RECERRAR',c.id,'Caja cerrada nuevamente después de una corrección',anterior,c);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('La caja volvió a quedar cerrada.');}
+ catch(e){Object.assign(c,anterior);alert('No se pudo cerrar la caja nuevamente. Verificá la conexión y los permisos de Supabase.');console.error(e)}
 }
 function renderEstadoCaja(fecha){
  const el=document.getElementById('estadoCaja');if(!el)return;const c=cajasCerradasLocal.find(x=>x.fecha===fecha);
  if(!c){el.innerHTML='<span class="pill estado-abierta">🟡 CAJA ABIERTA</span><span class="caja-info">Todavía no se ha realizado el cierre de esta fecha.</span><button class="btn primary" onclick="guardarCierreCaja(\''+fecha+'\')">🔒 Cerrar caja del día</button>';return;}
- if(c.estado==='correccion'){el.innerHTML='<span class="pill estado-correccion">🔵 EN CORRECCIÓN</span><span class="caja-info">Reabierta por '+esc(c.corregida_email||'administrador')+' el '+esc(new Date(c.corregida_at).toLocaleString('es-PE'))+'. Motivo: '+esc(c.motivo_correccion||'—')+'</span><button class="btn primary" onclick="finalizarCorreccionCaja(\''+fecha+'\')">🔒 Cerrar nuevamente</button>';return;}
+ if(c.estado==='correccion'){el.innerHTML='<span class="pill estado-correccion">🔵 EN CORRECCIÓN</span><span class="caja-info">Reabierta por '+esc(c.corregida_email||'administrador')+' el '+esc(new Date(c.corregida_at).toLocaleString('es-PE'))+'. Motivo: '+esc(c.motivo_correccion||'—')+'</span>'+(usuarioActual?.rol==='administrador'?'<button class="btn primary" onclick="finalizarCorreccionCaja(\''+fecha+'\')">🔒 Cerrar nuevamente</button>':'<span class="readonly-note">🔒 Solo el administrador puede modificar y cerrar esta caja.</span>');return;}
  el.innerHTML='<span class="pill estado-cerrada">🟢 CAJA CERRADA</span><span class="caja-info">Cerrada por <b>'+esc(c.cerrado_email||'—')+'</b> ('+esc(c.cerrado_rol||'—')+') el '+esc(new Date(c.cerrado_at).toLocaleString('es-PE'))+' · Cierre: '+money(c.total_cierre)+'</span>'+(usuarioActual?.rol==='administrador'?'<button class="btn btn-warning" onclick="reabrirCajaParaCorreccion(\''+fecha+'\')">✏️ Corregir caja</button>':'');
 }
 function renderCaja(){
@@ -564,8 +586,14 @@ async function submitModal(type,id){
  let d=formObj(), arr=type==='cliente'?db.clientes:type==='membresia'?db.membresias:type==='producto'?db.productos:type==='venta'?db.ventas:db.compras;
  const anterior=id?clonar(arr.find(x=>x.id===id)):null;
  const fechaOperacion=d.fecha||d.inicio||anterior?.fecha||anterior?.inicio||null;
- if(fechaOperacion&&cajaCerrada(fechaOperacion)&&!(usuarioActual?.rol==='administrador'&&modoCorreccionCaja&&fechaCorreccionCaja===fechaOperacion)){
-   const cierre=cajaCerrada(fechaOperacion); if(cierre) registrarHistorial('caja','BLOQUEO_MODIFICACION',cierre.id,'Intento de modificación bloqueado porque la caja del '+fechaOperacion+' está cerrada.',null,cierre); alert(bloqueoCajaMensaje(fechaOperacion)); return;
+ if(fechaOperacion){
+   const cierre=cajaCerrada(fechaOperacion);
+   const correccion=cajaEnCorreccion(fechaOperacion);
+   if(cierre || (correccion && usuarioActual?.rol!=='administrador')){
+     const registro=cierre||correccion;
+     await registrarHistorial('caja','BLOQUEO_MODIFICACION',registro.id,'Intento de modificación bloqueado porque la caja del '+fechaOperacion+' está '+(cierre?'cerrada':'en corrección por el administrador')+'.',null,registro);
+     alert(cierre?bloqueoCajaMensaje(fechaOperacion):'La caja del '+fechaOperacion+' está en corrección. Solo el administrador puede modificar registros de esa fecha.'); return;
+   }
  }
  d.registrado_at=anterior?.registrado_at||ahoraISO();
  d.actualizado_at=ahoraISO();
@@ -618,39 +646,22 @@ async function moverAPapelera(type,id,antes){
  papeleraLocal.unshift(item); localStorage.setItem('gym_papelera_v1',JSON.stringify(papeleraLocal));
  if(supabaseConnected&&usuarioActual){try{await supabaseClient.from('papelera').insert(item)}catch(e){console.warn(e)}}
 }
-async function deleteRecord(type,id){if(usuarioActual?.rol!=='administrador')return alert('Solo los administradores pueden eliminar registros.');if(!confirm('¿Enviar este registro a la papelera por 30 días?'))return;let key=type==='cliente'?'clientes':type==='membresia'?'membresias':type==='producto'?'productos':type==='venta'?'ventas':type==='compra'?'compras':'asistencias';const antes=db[key].find(x=>x.id===id);if(!antes)return;if(registroBloqueadoPorCaja(type,antes)){const fecha=fechaDeRegistro(type,antes);const cierre=cajaCerrada(fecha);if(cierre)registrarHistorial('caja','BLOQUEO_ELIMINACION',cierre.id,'Intento de eliminación bloqueado porque la caja del '+fecha+' está cerrada.',antes,cierre);if(!confirmarCorreccionCaja(fecha))return;}
-  // Al eliminar una venta/consumo, devolvemos automáticamente las unidades al stock.
-  if(type==='venta'){const producto=db.productos.find(p=>p.id===antes.productoId);if(producto){producto.stock=Number(producto.stock||0)+Number(antes.cantidad||0);}}
-  await moverAPapelera(type,id,antes);db[key]=db[key].filter(x=>x.id!==id);if(supabaseConnected){const {error}=await supabaseClient.from(tableMap[key]).delete().eq('id',id);if(error){console.warn(error);return alert('No se pudo eliminar el registro en la base central: '+error.message)}}await registrarHistorial(type,'ELIMINAR',id,type==='venta'?'Venta eliminada y stock restaurado.':'Registro enviado a papelera por 30 días',antes,null);await save()}
-async function eliminarSeleccionados(type){
+async function deleteRecord(type,id){
  if(usuarioActual?.rol!=='administrador')return alert('Solo los administradores pueden eliminar registros.');
- const ids=[...(seleccionesMasivas[type]||[])];
- if(!ids.length)return alert('Seleccioná al menos un registro.');
- const key=type==='cliente'?'clientes':type==='membresia'?'membresias':type==='producto'?'productos':type==='venta'?'ventas':type==='compra'?'compras':'asistencias';
- const registros=ids.map(id=>db[key].find(x=>String(x.id)===String(id))).filter(Boolean);
- if(!registros.length)return;
- if(!confirm(`¿Enviar ${registros.length} registro(s) seleccionados a la papelera por 30 días?`))return;
- // Si alguna operación pertenece a una caja cerrada, se solicita abrirla antes de continuar.
- const fechas=[...new Set(registros.map(r=>fechaDeRegistro(type,r)).filter(Boolean))];
- for(const fecha of fechas){
-   const afectados=registros.some(r=>fechaDeRegistro(type,r)===fecha&&registroBloqueadoPorCaja(type,r));
-   if(afectados&&!confirmarCorreccionCaja(fecha))return;
+ let key=type==='cliente'?'clientes':type==='membresia'?'membresias':type==='producto'?'productos':type==='venta'?'ventas':type==='compra'?'compras':'asistencias';
+ const antes=db[key].find(x=>x.id===id);if(!antes)return;
+ if(registroBloqueadoPorCaja(type,antes)){
+   const fecha=fechaDeRegistro(type,antes);
+   if(cajaCerrada(fecha)||cajaEnCorreccion(fecha))return alert('La caja del '+fecha+' está '+(cajaCerrada(fecha)?'cerrada':'en corrección')+'. Si necesitás modificar este registro, primero reabrí la caja desde Caja.');
  }
- for(const antes of registros){
-   const id=antes.id;
-   if(type==='venta'){
-     const producto=db.productos.find(p=>p.id===antes.productoId);
-     if(producto)producto.stock=Number(producto.stock||0)+Number(antes.cantidad||0);
-   }
-   await moverAPapelera(type,id,antes);
-   db[key]=db[key].filter(x=>x.id!==id);
-   if(supabaseConnected){const {error}=await supabaseClient.from(tableMap[key]).delete().eq('id',id);if(error)console.warn('Eliminación remota:',error.message)}
-   await registrarHistorial(type,'ELIMINAR',id,type==='venta'?'Venta eliminada y stock restaurado.':'Registro enviado a papelera por 30 días',antes,null);
- }
- seleccionesMasivas[type]=[];
- await save();
- renderPorTipo(type);
- alert(`${registros.length} registro(s) enviado(s) a la papelera correctamente.`);
+ if(!confirm('¿Enviar este registro a la papelera por 30 días?'))return;
+ const idx=db[key].findIndex(x=>x.id===id);
+ if(type==='venta'){const p=db.productos.find(x=>x.id===antes.productoId);if(p)p.stock+=Number(antes.cantidad||0);}
+ db[key].splice(idx,1);
+ const papel={id:crypto.randomUUID(),usuario_id:usuarioActual.id,usuario_email:usuarioActual.email||'',rol:usuarioActual.rol||'',modulo:type,registro_id:id,datos:clonar(antes),motivo:'Eliminado por administrador',eliminado_at:ahoraISO(),vence_at:new Date(Date.now()+30*86400000).toISOString()};
+ papeleraLocal.unshift(papel);localStorage.setItem('gym_papelera_v1',JSON.stringify(papeleraLocal));
+ await registrarHistorial(type,'ELIMINAR',id,'Registro enviado a papelera',antes,null);
+ await save();renderAll();
 }
 function editRecord(type,id){openModal(type,id)}
 function aplicarPermisos(){
