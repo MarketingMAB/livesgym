@@ -216,8 +216,12 @@ const todayEl=document.getElementById('today'); if(todayEl) todayEl.textContent=
 ['fechaCaja','repDesde','repHasta'].forEach(id=>document.getElementById(id).value=todayISO());
 
 async function save(){
+  // Guardar operaciones NO cierra ni cambia el estado de ninguna caja.
+  // Una caja EN CORRECCIÓN permanece así hasta que el administrador pulse
+  // explícitamente "Cerrar nuevamente".
   localStorage.setItem(KEY,JSON.stringify(db));
   if(supabaseConnected) await syncAllToSupabase();
+  localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));
   renderAll();
 }
 
@@ -426,11 +430,14 @@ async function reabrirCajaParaCorreccion(fecha){
 async function finalizarCorreccionCaja(fecha){
  if(usuarioActual?.rol!=='administrador')return alert('Solo el administrador puede cerrar nuevamente una caja que está en corrección.');
  const c=cajaEnCorreccion(fecha);if(!c)return alert('La caja no está en modo corrección.');
+ if(!confirm('¿Confirmás que terminaste todas las modificaciones de la caja del '+fecha+' y querés CERRARLA NUEVAMENTE?
+
+Si elegís Cancelar, seguirá EN CORRECCIÓN y podrás continuar modificándola.'))return;
  const mem=db.membresias.filter(x=>x.fecha===fecha),ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'),com=db.compras.filter(x=>x.fecha===fecha);const tv=mem.reduce((s,x)=>s+Number(x.total||0),0)+ven.reduce((s,x)=>s+Number(x.total||0),0),tg=com.reduce((s,x)=>s+Number(x.monto||0),0);
  const anterior={...c};
- c.estado='cerrada';c.total_ventas=tv;c.total_compras=tg;c.total_cierre=tv-tg;c.recerrado_at=ahoraISO();c.cerrado_por=usuarioActual.id;c.cerrado_email=usuarioActual.email||'';c.cerrado_rol=usuarioActual.rol||'';c.cerrado_at=ahoraISO();
- try{await persistirCierre(c);await registrarHistorial('caja','RECERRAR',c.id,'Caja cerrada nuevamente después de una corrección',anterior,c);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('La caja volvió a quedar cerrada.');}
- catch(e){Object.assign(c,anterior);alert('No se pudo cerrar la caja nuevamente. Verificá la conexión y los permisos de Supabase.');console.error(e)}
+ const actualizado={...c,estado:'cerrada',total_ventas:tv,total_compras:tg,total_cierre:tv-tg,recerrado_at:ahoraISO(),cerrado_por:usuarioActual.id,cerrado_email:usuarioActual.email||'',cerrado_rol:usuarioActual.rol||'',cerrado_at:ahoraISO()};
+ try{await persistirCierre(actualizado);const idx=cajasCerradasLocal.findIndex(x=>x.id===c.id);if(idx>=0)cajasCerradasLocal[idx]=actualizado;else cajasCerradasLocal.unshift(actualizado);localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));await registrarHistorial('caja','RECERRAR',c.id,'Caja cerrada nuevamente después de una corrección',anterior,actualizado);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('La caja volvió a quedar cerrada.');}
+ catch(e){console.error(e);alert('No se pudo cerrar la caja nuevamente. La caja seguirá EN CORRECCIÓN hasta que el administrador pueda cerrarla correctamente.');}
 }
 function renderEstadoCaja(fecha){
  const el=document.getElementById('estadoCaja');if(!el)return;const c=cajasCerradasLocal.find(x=>x.fecha===fecha);
@@ -465,11 +472,14 @@ async function reabrirCajaParaCorreccion(fecha){
 async function finalizarCorreccionCaja(fecha){
  if(usuarioActual?.rol!=='administrador')return alert('Solo el administrador puede cerrar nuevamente una caja que está en corrección.');
  const c=cajaEnCorreccion(fecha);if(!c)return alert('La caja no está en modo corrección.');
+ if(!confirm('¿Confirmás que terminaste todas las modificaciones de la caja del '+fecha+' y querés CERRARLA NUEVAMENTE?
+
+Si elegís Cancelar, seguirá EN CORRECCIÓN y podrás continuar modificándola.'))return;
  const mem=db.membresias.filter(x=>x.fecha===fecha),ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'),com=db.compras.filter(x=>x.fecha===fecha);const tv=mem.reduce((s,x)=>s+Number(x.total||0),0)+ven.reduce((s,x)=>s+Number(x.total||0),0),tg=com.reduce((s,x)=>s+Number(x.monto||0),0);
  const anterior={...c};
- c.estado='cerrada';c.total_ventas=tv;c.total_compras=tg;c.total_cierre=tv-tg;c.recerrado_at=ahoraISO();c.cerrado_por=usuarioActual.id;c.cerrado_email=usuarioActual.email||'';c.cerrado_rol=usuarioActual.rol||'';c.cerrado_at=ahoraISO();
- try{await persistirCierre(c);await registrarHistorial('caja','RECERRAR',c.id,'Caja cerrada nuevamente después de una corrección',anterior,c);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('La caja volvió a quedar cerrada.');}
- catch(e){Object.assign(c,anterior);alert('No se pudo cerrar la caja nuevamente. Verificá la conexión y los permisos de Supabase.');console.error(e)}
+ const actualizado={...c,estado:'cerrada',total_ventas:tv,total_compras:tg,total_cierre:tv-tg,recerrado_at:ahoraISO(),cerrado_por:usuarioActual.id,cerrado_email:usuarioActual.email||'',cerrado_rol:usuarioActual.rol||'',cerrado_at:ahoraISO()};
+ try{await persistirCierre(actualizado);const idx=cajasCerradasLocal.findIndex(x=>x.id===c.id);if(idx>=0)cajasCerradasLocal[idx]=actualizado;else cajasCerradasLocal.unshift(actualizado);localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));await registrarHistorial('caja','RECERRAR',c.id,'Caja cerrada nuevamente después de una corrección',anterior,actualizado);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('La caja volvió a quedar cerrada.');}
+ catch(e){console.error(e);alert('No se pudo cerrar la caja nuevamente. La caja seguirá EN CORRECCIÓN hasta que el administrador pueda cerrarla correctamente.');}
 }
 function renderEstadoCaja(fecha){
  const el=document.getElementById('estadoCaja');if(!el)return;const c=cajasCerradasLocal.find(x=>x.fecha===fecha);
@@ -605,7 +615,7 @@ async function submitModal(type,id){
  if(type==='venta'){const codigoProducto=String(d.codigoProducto||'').trim();let p=db.productos.find(x=>String(x.codigo)===codigoProducto)||db.productos.find(x=>x.id===d.productoId);if(!p)return alert('Ingresá un código de producto válido.');d.productoId=p.id;d.codigoProducto=p.codigo;d.nombreProducto=p.nombre;d.tipoOperacion=d.tipoOperacion||'Venta';d.cantidad=Number(d.cantidad);d.precio=Number(d.precio);d.total=Number(d.total);d.producto=p.nombre;d.categoria=p.categoria;if(d.tipoOperacion==='Consumo de Rubén'){d.pago='No aplica';d.numeroOperacion='';}else if(['Yape','Depósito / Transferencia','Culqi'].includes(d.pago)){if(!String(d.numeroOperacion||'').trim())return alert('Ingresá el número de operación.');}else d.numeroOperacion='';d.id=id||crypto.randomUUID();if(!id){if(d.cantidad>p.stock)return alert('Stock insuficiente.');p.stock-=d.cantidad;arr.push(d)}else{let old=db.ventas.find(x=>x.id===id);if(old&&old.productoId===d.productoId)p.stock+=Number(old.cantidad)-d.cantidad;else if(d.cantidad>p.stock)return alert('Stock insuficiente.');arr[arr.findIndex(x=>x.id===id)]=d}}
  if(type==='compra'){d.monto=Number(d.monto);if(['Yape','Depósito / Transferencia','Culqi'].includes(d.pago)){if(!String(d.numeroOperacion||'').trim())return alert('Ingresá el número de operación.');}else d.numeroOperacion='';d.id=id||crypto.randomUUID();if(!id)arr.push(d);else arr[arr.findIndex(x=>x.id===id)]=d}
  const despues=clonar(arr.find(x=>x.id===d.id)||d); const accion=id?'EDITAR':'CREAR'; const detalle=accion==='EDITAR'?`Modificó ${nombreRegistro(type,despues)}. Cambios: ${diferencias(anterior,despues)}`:`Creó ${nombreRegistro(type,despues)}. Datos: ${diferencias(null,despues)}`;
- await registrarHistorial(type,accion,id||d.id,detalle,anterior,despues); if(accion==='EDITAR'&&fechaOperacion&&modoCorreccionCaja&&fechaCorreccionCaja===fechaOperacion){const cierre=cajaCerrada(fechaOperacion);if(cierre)registrarHistorial('caja','CORRECCION_REGISTRO',cierre.id,'Corrección realizada en '+type+'. Registro: '+nombreRegistro(type,despues),anterior,despues)} await save();closeModal()
+ await registrarHistorial(type,accion,id||d.id,detalle,anterior,despues); if(accion==='EDITAR'&&fechaOperacion&&modoCorreccionCaja&&fechaCorreccionCaja===fechaOperacion){const cierre=cajaEnCorreccion(fechaOperacion);if(cierre)registrarHistorial('caja','CORRECCION_REGISTRO',cierre.id,'Corrección realizada en '+type+'. Registro: '+nombreRegistro(type,despues),anterior,despues)} await save();closeModal()
 }
 function previewCliente(){
   let f=document.getElementById('modalForm'); if(!f||!f.elements.clienteCodigo)return;
