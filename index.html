@@ -418,70 +418,40 @@ async function guardarCierreCaja(fecha){
  try{await persistirCierre(c);await registrarHistorial('caja','CERRAR',c.id,'Caja cerrada para '+fecha,null,c);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('Caja del '+fecha+' cerrada correctamente.');}
  catch(e){cajasCerradasLocal=cajasCerradasLocal.filter(x=>x.id!==c.id);localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));alert('No se pudo guardar el cierre. Verificá la conexión y los permisos de Supabase.');}
 }
-async function reabrirCajaParaCorreccion(fecha){
-  if(usuarioActual?.rol!=='administrador')return alert('Solo el administrador puede corregir una caja cerrada.');
-  const c=cajaCerrada(fecha);if(!c)return;
-  const motivo=prompt('Ingresá el motivo de la corrección de la caja del '+fecha+':');if(!motivo||!motivo.trim())return;
-  modoCorreccionCaja=true;
-  c.estado='correccion';c.motivo_correccion=motivo.trim();c.corregida_por=usuarioActual.id;c.corregida_email=usuarioActual.email||'';c.corregida_at=ahoraISO();
-  localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));
-  await registrarHistorial('caja','REABRIR_CORRECCION',c.id,'Caja reabierta temporalmente para corrección. Motivo: '+motivo.trim(),null,c);renderCaja();alert('Caja en modo corrección. Podés corregir ventas, compras o membresías de esa fecha. Al terminar, volvé a cerrar la caja.');
-}
-async function finalizarCorreccionCaja(fecha){
- if(usuarioActual?.rol!=='administrador')return alert('Solo el administrador puede cerrar nuevamente una caja que está en corrección.');
- const c=cajaEnCorreccion(fecha);if(!c)return alert('La caja no está en modo corrección.');
- if(!confirm('¿Confirmás que terminaste todas las modificaciones de la caja del '+fecha+' y querés CERRARLA NUEVAMENTE?\n\nSi elegís Cancelar, seguirá EN CORRECCIÓN y podrás continuar modificándola.'))return;
- const mem=db.membresias.filter(x=>x.fecha===fecha),ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'),com=db.compras.filter(x=>x.fecha===fecha);const tv=mem.reduce((s,x)=>s+Number(x.total||0),0)+ven.reduce((s,x)=>s+Number(x.total||0),0),tg=com.reduce((s,x)=>s+Number(x.monto||0),0);
- const anterior={...c};
- const actualizado={...c,estado:'cerrada',total_ventas:tv,total_compras:tg,total_cierre:tv-tg,recerrado_at:ahoraISO(),cerrado_por:usuarioActual.id,cerrado_email:usuarioActual.email||'',cerrado_rol:usuarioActual.rol||'',cerrado_at:ahoraISO()};
- try{await persistirCierre(actualizado);const idx=cajasCerradasLocal.findIndex(x=>x.id===c.id);if(idx>=0)cajasCerradasLocal[idx]=actualizado;else cajasCerradasLocal.unshift(actualizado);localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));await registrarHistorial('caja','RECERRAR',c.id,'Caja cerrada nuevamente después de una corrección',anterior,actualizado);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('La caja volvió a quedar cerrada.');}
- catch(e){console.error(e);alert('No se pudo cerrar la caja nuevamente. La caja seguirá EN CORRECCIÓN hasta que el administrador pueda cerrarla correctamente.');}
-}
-function renderEstadoCaja(fecha){
- const el=document.getElementById('estadoCaja');if(!el)return;const c=cajasCerradasLocal.find(x=>x.fecha===fecha);
- if(!c){el.innerHTML='<span class="pill estado-abierta">🟡 CAJA ABIERTA</span><span class="caja-info">Todavía no se ha realizado el cierre de esta fecha.</span><button class="btn primary" onclick="guardarCierreCaja(\''+fecha+'\')">🔒 Cerrar caja del día</button>';return;}
- const hora=new Date(c.cerrado_at).toLocaleString('es-PE');
- if(c.estado==='correccion'){el.innerHTML='<span class="pill estado-correccion">🔵 EN CORRECCIÓN</span><span class="caja-info">Reabierta por '+esc(c.corregida_email||'administrador')+' el '+esc(new Date(c.corregida_at).toLocaleString('es-PE'))+'. Motivo: '+esc(c.motivo_correccion||'—')+'</span>'+(usuarioActual?.rol==='administrador'?'<button class="btn primary" onclick="finalizarCorreccionCaja(\''+fecha+'\')">🔒 Cerrar nuevamente</button>':'<span class="readonly-note">🔒 Solo el administrador puede modificar y cerrar esta caja.</span>');return;}
- el.innerHTML='<span class="pill estado-cerrada">🟢 CAJA CERRADA</span><span class="caja-info">Cerrada por <b>'+esc(c.cerrado_email||'—')+'</b> ('+esc(c.cerrado_rol||'—')+') el '+esc(hora)+' · Cierre: '+money(c.total_cierre)+'</span>'+(usuarioActual?.rol==='administrador'?'<button class="btn btn-warning" onclick="reabrirCajaParaCorreccion(\''+fecha+'\')">✏️ Modificar / corregir caja</button>':'');
-}
 async function persistirCierre(c){
- if(supabaseConnected&&usuarioActual){
-  const {error}=await supabaseClient.from('cajas_cierres').upsert(c,{onConflict:'fecha'});
-  if(error){console.error('No se pudo guardar cierre remoto:',error);throw error;}
- }
+ if(supabaseConnected&&usuarioActual){const {error}=await supabaseClient.from('cajas_cierres').upsert(c,{onConflict:'fecha'});if(error)throw error;}
  localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));
 }
 async function guardarCierreCaja(fecha){
  if(!usuarioActual)return;
- if(cajaEnCorreccion(fecha))return alert('La caja del '+fecha+' está en corrección. Solo el administrador puede modificarla y cerrarla nuevamente.');
+ if(cajaEnCorreccion(fecha))return alert('La caja del '+fecha+' está EN CORRECCIÓN. Solo el administrador puede modificarla y cerrarla nuevamente.');
  if(cajaCerrada(fecha))return alert('La caja de esta fecha ya está cerrada.');
  const mem=db.membresias.filter(x=>x.fecha===fecha),ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'),com=db.compras.filter(x=>x.fecha===fecha);
  const totalVentas=mem.reduce((s,x)=>s+Number(x.total||0),0)+ven.reduce((s,x)=>s+Number(x.total||0),0),totalCompras=com.reduce((s,x)=>s+Number(x.monto||0),0);
  const c={id:crypto.randomUUID(),fecha,estado:'cerrada',cerrado_por:usuarioActual.id,cerrado_email:usuarioActual.email||'',cerrado_rol:usuarioActual.rol||'',cerrado_at:ahoraISO(),total_ventas:totalVentas,total_compras:totalCompras,total_cierre:totalVentas-totalCompras};
  cajasCerradasLocal.unshift(c);
- try{await persistirCierre(c);await registrarHistorial('caja','CERRAR',c.id,'Caja cerrada para '+fecha,null,c);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('Caja del '+fecha+' cerrada correctamente.');}
- catch(e){cajasCerradasLocal=cajasCerradasLocal.filter(x=>x.id!==c.id);localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));alert('No se pudo guardar el cierre. Verificá la conexión y los permisos de Supabase.');}
+ try{await persistirCierre(c);await registrarHistorial('caja','CERRAR',c.id,'Caja cerrada para '+fecha,null,c);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('Caja del '+fecha+' cerrada correctamente.');}catch(e){cajasCerradasLocal=cajasCerradasLocal.filter(x=>x.id!==c.id);localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));alert('No se pudo guardar el cierre. Verificá la conexión y los permisos de Supabase.');}
 }
 async function reabrirCajaParaCorreccion(fecha){
- if(usuarioActual?.rol!=='administrador')return alert('Solo el administrador puede corregir una caja cerrada.');const c=cajaCerrada(fecha);if(!c)return;
+ if(usuarioActual?.rol!=='administrador')return alert('Solo el administrador puede corregir una caja cerrada.');
+ const c=cajaCerrada(fecha);if(!c)return;
  const motivo=prompt('Ingresá el motivo de la corrección de la caja del '+fecha+':');if(!motivo||!motivo.trim())return;
- modoCorreccionCaja=true;fechaCorreccionCaja=fecha;c.estado='correccion';c.motivo_correccion=motivo.trim();c.corregida_por=usuarioActual.id;c.corregida_email=usuarioActual.email||'';c.corregida_at=ahoraISO();await persistirCierre(c);await registrarHistorial('caja','REABRIR_CORRECCION',c.id,'Caja reabierta temporalmente para corrección. Motivo: '+motivo.trim(),null,c);renderCaja();alert('Caja en modo corrección. Corregí el registro y luego cerrá nuevamente la caja.');
+ modoCorreccionCaja=true;fechaCorreccionCaja=fecha;c.estado='correccion';c.motivo_correccion=motivo.trim();c.corregida_por=usuarioActual.id;c.corregida_email=usuarioActual.email||'';c.corregida_at=ahoraISO();
+ const idx=cajasCerradasLocal.findIndex(x=>x.id===c.id);if(idx>=0)cajasCerradasLocal[idx]=c;else cajasCerradasLocal.unshift(c);localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));
+ try{await persistirCierre(c);await registrarHistorial('caja','REABRIR_CORRECCION',c.id,'Caja reabierta para corrección. Motivo: '+motivo.trim(),null,c);renderCaja();alert('Caja en modo corrección. Podés hacer todos los cambios que necesites. No se cerrará hasta que pulses "Cerrar nuevamente".');}catch(e){console.error(e);c.estado='cerrada';localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));modoCorreccionCaja=false;fechaCorreccionCaja=null;alert('No se pudo reabrir la caja en Supabase. La caja sigue cerrada.');}
 }
 async function finalizarCorreccionCaja(fecha){
  if(usuarioActual?.rol!=='administrador')return alert('Solo el administrador puede cerrar nuevamente una caja que está en corrección.');
  const c=cajaEnCorreccion(fecha);if(!c)return alert('La caja no está en modo corrección.');
  if(!confirm('¿Confirmás que terminaste todas las modificaciones de la caja del '+fecha+' y querés CERRARLA NUEVAMENTE?\n\nSi elegís Cancelar, seguirá EN CORRECCIÓN y podrás continuar modificándola.'))return;
- const mem=db.membresias.filter(x=>x.fecha===fecha),ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'),com=db.compras.filter(x=>x.fecha===fecha);const tv=mem.reduce((s,x)=>s+Number(x.total||0),0)+ven.reduce((s,x)=>s+Number(x.total||0),0),tg=com.reduce((s,x)=>s+Number(x.monto||0),0);
- const anterior={...c};
- const actualizado={...c,estado:'cerrada',total_ventas:tv,total_compras:tg,total_cierre:tv-tg,recerrado_at:ahoraISO(),cerrado_por:usuarioActual.id,cerrado_email:usuarioActual.email||'',cerrado_rol:usuarioActual.rol||'',cerrado_at:ahoraISO()};
- try{await persistirCierre(actualizado);const idx=cajasCerradasLocal.findIndex(x=>x.id===c.id);if(idx>=0)cajasCerradasLocal[idx]=actualizado;else cajasCerradasLocal.unshift(actualizado);localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));await registrarHistorial('caja','RECERRAR',c.id,'Caja cerrada nuevamente después de una corrección',anterior,actualizado);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('La caja volvió a quedar cerrada.');}
- catch(e){console.error(e);alert('No se pudo cerrar la caja nuevamente. La caja seguirá EN CORRECCIÓN hasta que el administrador pueda cerrarla correctamente.');}
+ const mem=db.membresias.filter(x=>x.fecha===fecha),ven=db.ventas.filter(x=>x.fecha===fecha&&(x.tipoOperacion||'Venta')==='Venta'),com=db.compras.filter(x=>x.fecha===fecha);const tv=mem.reduce((s,x)=>s+Number(x.total||0),0)+ven.reduce((s,x)=>s+Number(x.total||0),0),tg=com.reduce((s,x)=>s+Number(x.monto||0),0);const anterior={...c};const actualizado={...c,estado:'cerrada',total_ventas:tv,total_compras:tg,total_cierre:tv-tg,recerrado_at:ahoraISO(),cerrado_por:usuarioActual.id,cerrado_email:usuarioActual.email||'',cerrado_rol:usuarioActual.rol||'',cerrado_at:ahoraISO()};
+ try{await persistirCierre(actualizado);const idx=cajasCerradasLocal.findIndex(x=>x.id===c.id);if(idx>=0)cajasCerradasLocal[idx]=actualizado;else cajasCerradasLocal.unshift(actualizado);localStorage.setItem('gym_cajas_cerradas_v1',JSON.stringify(cajasCerradasLocal));await registrarHistorial('caja','RECERRAR',c.id,'Caja cerrada nuevamente después de una corrección',anterior,actualizado);modoCorreccionCaja=false;fechaCorreccionCaja=null;renderCaja();alert('La caja volvió a quedar cerrada.');}catch(e){console.error(e);alert('No se pudo cerrar la caja nuevamente. La caja seguirá EN CORRECCIÓN.');}
 }
 function renderEstadoCaja(fecha){
  const el=document.getElementById('estadoCaja');if(!el)return;const c=cajasCerradasLocal.find(x=>x.fecha===fecha);
  if(!c){el.innerHTML='<span class="pill estado-abierta">🟡 CAJA ABIERTA</span><span class="caja-info">Todavía no se ha realizado el cierre de esta fecha.</span><button class="btn primary" onclick="guardarCierreCaja(\''+fecha+'\')">🔒 Cerrar caja del día</button>';return;}
  if(c.estado==='correccion'){el.innerHTML='<span class="pill estado-correccion">🔵 EN CORRECCIÓN</span><span class="caja-info">Reabierta por '+esc(c.corregida_email||'administrador')+' el '+esc(new Date(c.corregida_at).toLocaleString('es-PE'))+'. Motivo: '+esc(c.motivo_correccion||'—')+'</span>'+(usuarioActual?.rol==='administrador'?'<button class="btn primary" onclick="finalizarCorreccionCaja(\''+fecha+'\')">🔒 Cerrar nuevamente</button>':'<span class="readonly-note">🔒 Solo el administrador puede modificar y cerrar esta caja.</span>');return;}
- el.innerHTML='<span class="pill estado-cerrada">🟢 CAJA CERRADA</span><span class="caja-info">Cerrada por <b>'+esc(c.cerrado_email||'—')+'</b> ('+esc(c.cerrado_rol||'—')+') el '+esc(new Date(c.cerrado_at).toLocaleString('es-PE'))+' · Cierre: '+money(c.total_cierre)+'</span>'+(usuarioActual?.rol==='administrador'?'<button class="btn btn-warning" onclick="reabrirCajaParaCorreccion(\''+fecha+'\')">✏️ Modificar / corregir caja</button>':'');
+ const hora=new Date(c.cerrado_at).toLocaleString('es-PE');el.innerHTML='<span class="pill estado-cerrada">🟢 CAJA CERRADA</span><span class="caja-info">Cerrada por <b>'+esc(c.cerrado_email||'—')+'</b> ('+esc(c.cerrado_rol||'—')+') el '+esc(hora)+' · Cierre: '+money(c.total_cierre)+'</span>'+(usuarioActual?.rol==='administrador'?'<button class="btn btn-warning" onclick="reabrirCajaParaCorreccion(\''+fecha+'\')">✏️ Modificar / corregir caja</button>':'');
 }
 function renderCaja(){
   const fecha=document.getElementById('fechaCaja').value||todayISO();
